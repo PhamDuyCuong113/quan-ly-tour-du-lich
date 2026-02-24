@@ -1,0 +1,32 @@
+{
+	"folders": [
+		{
+			"name": "touring",
+			"path": "../../../../../.."
+		},
+		{
+			"name": "Javascript",
+			"path": "F:/A DSA + JAVA OOP/Javascript"
+		},
+		{
+			"name": "A DSA + JAVA OOP",
+			"path": "F:/A DSA + JAVA OOP"
+		},
+		{
+			"name": "HTMLCSS",
+			"path": "F:/A DSA + JAVA OOP/HTMLCSS"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"iostream": "cpp"
+		},
+		"java.project.sourcePaths": [
+			""
+		],
+		"liveServer.settings.multiRootWorkspaceName": "Javascript",
+		"java.configuration.updateBuildConfiguration": "interactive",
+		"java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable",
+		"java.compile.nullAnalysis.mode": "automatic"
+	}
+}

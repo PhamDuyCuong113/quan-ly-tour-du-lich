@@ -1,0 +1,59 @@
+package com.touring.touringbackend.controller;
+
+import com.touring.touringbackend.dto.admin.AdminStatsResponse;
+import com.touring.touringbackend.dto.passenger.PassengerResponse;
+import com.touring.touringbackend.service.AdminService;
+import com.touring.touringbackend.service.ExcelExportService; // THÊM IMPORT NÀY
+import com.touring.touringbackend.service.PassengerService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin")
+@RequiredArgsConstructor
+public class AdminController {
+
+    private final AdminService adminService;
+    private final ExcelExportService excelExportService; // KHAI BÁO THÊM Ở ĐÂY
+    private final PassengerService passengerService;
+    /**
+     * API Thống kê tổng quan (Doanh thu, số đơn, số khách)
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<AdminStatsResponse> getStats() {
+        return ResponseEntity.ok(adminService.getStats());
+    }
+
+    /**
+     * API Xuất danh sách hành khách ra file Excel
+     * Link: GET /api/admin/tours/schedules/{scheduleId}/export
+     */
+    @GetMapping("/tours/schedules/{scheduleId}/export")
+    public ResponseEntity<byte[]> exportPassengers(@PathVariable Long scheduleId) throws IOException {
+        // Gọi service tạo file Excel dạng byte array
+        byte[] excelContent = excelExportService.exportPassengersToExcel(scheduleId);
+
+        // Trả về file để trình duyệt tự động tải xuống
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=passengers_schedule_" + scheduleId + ".xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelContent);
+    }
+
+    // Trong AdminController.java
+
+    @GetMapping("/schedules/{scheduleId}/passengers")
+    public ResponseEntity<List<PassengerResponse>> getManifest(@PathVariable Long scheduleId) {
+        // Trả về danh sách toàn bộ đoàn đi cùng lịch trình này
+        return ResponseEntity.ok(passengerService.getAllPassengersInSchedule(scheduleId));
+    }
+}

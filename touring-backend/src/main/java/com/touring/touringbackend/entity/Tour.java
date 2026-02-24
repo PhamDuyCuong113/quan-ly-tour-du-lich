@@ -1,0 +1,82 @@
+package com.touring.touringbackend.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "tour")
+public class Tour {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "tour_id")
+    private Long tourId;
+
+    @Column(name = "tour_code", unique = true, length = 30)
+    private String tourCode;
+
+    @Column(name = "tour_name", nullable = false, length = 150)
+    private String tourName;
+
+    @Column(length = 100)
+    private String destination;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tour_type", length = 20)
+    private TourType tourType;
+
+    @Column(name = "duration_days")
+    private Integer durationDays;
+
+    @Column(
+            name = "base_price",
+            precision = 12,
+            scale = 2
+    )
+    private BigDecimal basePrice;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TourStatus status;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    /* =====================
+       QUAN HỆ
+       ===================== */
+
+    @OneToMany(mappedBy = "tour", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<TourSchedule> schedules;
+
+    @OneToMany(mappedBy = "tour", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Itinerary> itineraries;
+
+    @OneToMany(mappedBy = "tour", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<TourImage> images;
+
+    /* =====================
+       LIFECYCLE
+       ===================== */
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = TourStatus.OPEN;
+        }
+    }
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false; // Mặc định là false
+}
