@@ -182,4 +182,45 @@ public class TourService {
                 avgRating, totalReviews
         );
     }
+
+    public List<TourResponse> getRelatedTours(Long tourId) {
+        Tour currentTour = tourRepository.findById(tourId).orElseThrow();
+        return tourRepository.findTop4ByDestinationContainingIgnoreCaseAndTourIdNotAndStatus(
+                        currentTour.getDestination(), tourId, TourStatus.OPEN)
+                .stream()
+                .map(this::mapToTourResponse)
+                .toList();
+    }
+
+
+    private final ItineraryRepository itineraryRepository;
+
+    @Transactional
+    public String addItinerary(Long tourId, List<ItineraryRequest> requests) {
+        // 1. Tìm Tour
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Tour ID: " + tourId));
+
+        // 2. (Tùy chọn) Xóa lịch trình cũ của Tour này để cập nhật lại từ đầu
+        itineraryRepository.deleteByTourTourId(tourId);
+
+        // 3. Chuyển đổi DTO sang Entity và lưu
+        List<Itinerary> itineraries = requests.stream().map(req -> {
+            Itinerary item = new Itinerary();
+            item.setTour(tour);
+            item.setDayNumber(req.dayNumber());
+            item.setTitle(req.title());
+            item.setDescription(req.description());
+            return item;
+        }).toList();
+
+        itineraryRepository.saveAll(itineraries);
+        return "Đã cập nhật lịch trình cho tour: " + tour.getTourName();
+    }
+
+    @Transactional
+    public String deleteTourImage(Long imageId) {
+        tourImageRepository.deleteById(imageId);
+        return "Đã xóa ảnh thành công";
+    }
 }

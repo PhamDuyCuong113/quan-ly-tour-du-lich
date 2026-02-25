@@ -72,4 +72,17 @@ public class TourController {
         String url = tourService.uploadTourImage(id, file);
         return ResponseEntity.ok("Upload thành công! Xem ảnh tại: " + url);
     }
+
+    @GetMapping("/{id}/related")
+    public ResponseEntity<List<TourResponse>> getRelated(@PathVariable Long id) {
+        return ResponseEntity.ok(tourService.getRelatedTours(id));
+    }
+
+    @PostMapping("/{id}/itineraries")
+    public ResponseEntity<String> addItinerary(
+            @PathVariable Long id,
+            @RequestBody List<ItineraryRequest> requests) {
+
+        return ResponseEntity.ok(tourService.addItinerary(id, requests));
+    }
 }

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/promotions")
 @RequiredArgsConstructor // Tự động inject PromotionRepository qua Constructor
@@ -38,5 +40,10 @@ public class PromotionController {
         promotionRepository.save(promotion);
 
         return ResponseEntity.ok("Tạo mã khuyến mãi thành công: " + request.code());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Promotion>> getAll() {
+        return ResponseEntity.ok(promotionRepository.findAllByOrderByPromotionIdDesc());
     }
 }

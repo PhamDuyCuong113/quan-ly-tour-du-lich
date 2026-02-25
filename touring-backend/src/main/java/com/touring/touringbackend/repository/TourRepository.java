@@ -30,4 +30,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             BigDecimal maxPrice,
             TourStatus status
     );
+
+    List<Tour> findTop4ByDestinationContainingIgnoreCaseAndTourIdNotAndStatus(
+            String destination, Long tourId, TourStatus status);
 }
