@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,11 +41,15 @@ public class TourController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<TourResponse>> searchTours(
-            @RequestParam(required = false) String destination,
+    public ResponseEntity<List<TourResponse>> search(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice) {
-        return ResponseEntity.ok(tourService.searchTours(destination, minPrice, maxPrice));
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) String sortBy) {
+
+        return ResponseEntity.ok(tourService.searchTours(keyword, minPrice, maxPrice, startDate, endDate, sortBy));
     }
 
     @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

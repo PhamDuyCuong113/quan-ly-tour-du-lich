@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -65,15 +66,35 @@ public class TourService {
         );
     }
 
+    /**
+     * Tìm kiếm nâng cao dành cho cả Khách hàng và Admin
+     */
     @Transactional(readOnly = true)
-    public List<TourResponse> searchTours(String destination, BigDecimal minPrice, BigDecimal maxPrice) {
-        String searchDest = (destination == null) ? "" : destination;
-        BigDecimal searchMin = (minPrice == null) ? BigDecimal.ZERO : minPrice;
-        BigDecimal searchMax = (maxPrice == null) ? new BigDecimal("999999999") : maxPrice;
+    public List<TourResponse> searchTours(String keyword, BigDecimal minPrice, BigDecimal maxPrice,
+                                          LocalDate startDate, LocalDate endDate, String sortBy) {
 
-        return tourRepository.findByDestinationContainingIgnoreCaseAndBasePriceBetweenAndStatus(
-                        searchDest, searchMin, searchMax, TourStatus.OPEN)
-                .stream()
+        // 1. Gọi hàm advancedSearch từ Repository
+        // JPA sẽ tự động bỏ qua các điều kiện bị NULL nhờ logic "(:param IS NULL OR ...)" trong @Query
+        List<Tour> tours = tourRepository.advancedSearch(keyword, minPrice, maxPrice, startDate, endDate);
+
+        // 2. Logic Sắp xếp (Sorting)
+        if (sortBy != null) {
+            switch (sortBy) {
+                case "price_asc":
+                    tours.sort((t1, t2) -> t1.getBasePrice().compareTo(t2.getBasePrice()));
+                    break;
+                case "price_desc":
+                    tours.sort((t1, t2) -> t2.getBasePrice().compareTo(t1.getBasePrice()));
+                    break;
+                case "newest":
+                default:
+                    tours.sort((t1, t2) -> t2.getTourId().compareTo(t1.getTourId()));
+                    break;
+            }
+        }
+
+        // 3. Map sang DTO để trả về (Hàm mapToTourResponse đã có rating và ảnh)
+        return tours.stream()
                 .map(this::mapToTourResponse)
                 .toList();
     }
