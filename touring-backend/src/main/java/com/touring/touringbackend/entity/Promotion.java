@@ -1,5 +1,6 @@
 package com.touring.touringbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -41,4 +42,9 @@ public class Promotion {
 
     @Column(name = "current_usage")
     private Integer currentUsage = 0; // Số lượt đã dùng
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id")
+    @JsonIgnore
+    private Staff staff;
 }

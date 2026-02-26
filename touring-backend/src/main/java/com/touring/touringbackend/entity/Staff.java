@@ -1,5 +1,6 @@
 package com.touring.touringbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ public class Staff {
 
     @OneToOne
     @JoinColumn(name = "account_id")
+    @JsonIgnore
     private Account account;
 
     @Column(name = "full_name", nullable = false)
@@ -40,4 +42,6 @@ public class Staff {
 
     @Enumerated(EnumType.STRING)
     private StaffStatus status;
+
+
 }

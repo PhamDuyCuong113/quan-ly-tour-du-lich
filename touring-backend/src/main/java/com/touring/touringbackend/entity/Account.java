@@ -1,5 +1,6 @@
 package com.touring.touringbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,9 +44,11 @@ public class Account {
        ===================== */
 
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Customer customer;
 
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Staff staff;
 
     /* =====================

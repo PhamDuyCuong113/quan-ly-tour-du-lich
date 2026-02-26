@@ -5,7 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface PassengerRepository extends JpaRepository<Passenger, Long> {
-    List<Passenger> findByBookingBookingId(Long bookingId);
 
+    // Lấy khách cho 1 ngày khởi hành cụ thể
     List<Passenger> findByBookingTourScheduleScheduleId(Long scheduleId);
+
+    // Lấy TOÀN BỘ khách đã đặt của 1 Tour (tất cả các ngày cộng lại)
+    List<Passenger> findByBookingTourScheduleTourTourId(Long tourId);
 }

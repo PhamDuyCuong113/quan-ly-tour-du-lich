@@ -51,11 +51,13 @@ public class JwtFilter extends OncePerRequestFilter {
                     Long customerId = claims.get("customerId") != null
                             ? Long.valueOf(claims.get("customerId").toString())
                             : null;
+                    Long staffId = claims.get("staffId") != null ? Long.valueOf(claims.get("staffId").toString()) : null;
                     String role = claims.get("role", String.class);
 
                     CustomUserDetails user = new CustomUserDetails(
                             accountId,
                             customerId,
+                            staffId,
                             claims.getSubject(),
                             "",
                             role

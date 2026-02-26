@@ -8,8 +8,12 @@ public record TourDetailResponse(
         Long tourId,
         String tourName,
         String description,
+        String destination,
         BigDecimal basePrice,
-        List<ScheduleDTO> schedules // Danh sách các ngày khởi hành
+        Double averageRating,
+        Long totalReviews,
+        List<ScheduleDTO> schedules,
+        List<ItineraryDTO> itineraries
 ) {
     public record ScheduleDTO(
             Long scheduleId,
@@ -17,5 +21,11 @@ public record TourDetailResponse(
             LocalDate returnDate,
             Integer availableSlots,
             BigDecimal price
+    ) {}
+    public record ItineraryDTO(
+            Long itineraryId,
+            Integer dayNumber,
+            String title,
+            String description
     ) {}
 }

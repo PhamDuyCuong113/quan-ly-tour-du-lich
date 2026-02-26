@@ -10,6 +10,7 @@ public record TourResponse(
         BigDecimal basePrice,
         Integer durationDays,
         String imageUrl,
-        Double averageRating, // Thêm trường này
-        Long totalReviews     // Thêm trường này
+        Double averageRating,
+        Long totalReviews,
+        String staffName
 ) {}

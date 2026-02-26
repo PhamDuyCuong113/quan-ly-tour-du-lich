@@ -8,49 +8,45 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 public interface TourRepository extends JpaRepository<Tour, Long> {
 
-
-
-    // Kiểm tra trùng mã Tour (Dùng cho lúc Admin tạo Tour)
+    // Kiểm tra trùng mã Tour
     boolean existsByTourCode(String tourCode);
 
-    // Lấy danh sách Tour theo trạng thái (Dùng cho khách xem Tour OPEN)
+    // Lấy danh sách Tour công khai cho khách
     List<Tour> findByStatusAndIsDeletedFalse(TourStatus status);
 
-    // Lấy chi tiết Tour kèm theo Lịch trình (Schedules) và Ảnh (Images)
-    // Dùng @EntityGraph để tránh lỗi Lazy Loading và tối ưu số câu lệnh SELECT
-    @EntityGraph(attributePaths = {"schedules", "images", "itineraries"})
+    // Lấy chi tiết Tour (Nạp luôn các bảng liên quan để tránh lỗi 0.0 rating hoặc rỗng lịch trình)
+    @EntityGraph(attributePaths = {"schedules", "images", "itineraries", "staff"})
     Optional<Tour> findById(Long id);
 
-    List<Tour> findByDestinationContainingIgnoreCaseAndBasePriceBetweenAndStatus(
-            String destination,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            TourStatus status
-    );
-
+    // Tìm top 4 tour liên quan
     List<Tour> findTop4ByDestinationContainingIgnoreCaseAndTourIdNotAndStatus(
             String destination, Long tourId, TourStatus status);
 
-
+    /**
+     * HÀM TÌM KIẾM NÂNG CAO (Dùng cho cả Khách, Staff và Admin)
+     */
     @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN t.schedules s " +
-            "WHERE (:keyword IS NULL OR " + // Nếu keyword có giá trị thì mới lọc
-            "      LOWER(t.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + // Tìm trong điểm đến
-            "      LOWER(t.tourName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +    // Tìm trong tên tour
+            "WHERE (:keyword IS NULL OR " +
+            "      LOWER(t.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "      LOWER(t.tourName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:minPrice IS NULL OR t.basePrice >= :minPrice) " +
             "AND (:maxPrice IS NULL OR t.basePrice <= :maxPrice) " +
             "AND (:startDate IS NULL OR s.departureDate >= :startDate) " +
             "AND (:endDate IS NULL OR s.departureDate <= :endDate) " +
+            "AND (:staffId IS NULL OR t.staff.id = :staffId) " + // CHỐT CHẶN: Lọc theo chủ sở hữu
             "AND t.isDeleted = false")
     List<Tour> advancedSearch(
-            @Param("keyword") String keyword, // Đổi tên từ destination sang keyword cho đúng ý nghĩa
+            @Param("keyword") String keyword,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
-            @Param("startDate") java.time.LocalDate startDate,
-            @Param("endDate") java.time.LocalDate endDate
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("staffId") Long staffId // Nếu truyền null -> Admin (xem hết), nếu có ID -> Staff (xem của mình)
     );
 }

@@ -1,5 +1,6 @@
 package com.touring.touringbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +21,7 @@ public class Customer {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false, unique = true)
+    @JsonIgnore
     private Account account;
 
     @Column(name = "full_name", length = 100)
@@ -40,6 +42,10 @@ public class Customer {
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private LoyaltyPoint loyaltyPoint;
 
     @PrePersist
     protected void onCreate() {

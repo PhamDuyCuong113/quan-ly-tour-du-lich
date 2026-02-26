@@ -48,11 +48,11 @@ public class SecurityConfig {
                         // Admin APIs
                         .requestMatchers(HttpMethod.POST, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/tours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/tours/*/itineraries").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/promotions/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/promotions/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
 
                         // Customer/Authenticated APIs
                         .requestMatchers("/api/auth/me").authenticated()

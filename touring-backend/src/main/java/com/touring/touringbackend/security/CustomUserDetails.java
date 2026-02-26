@@ -16,7 +16,8 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
     private Long accountId;
-    private Long customerId;
+    private Long customerId; // Null nếu là Staff/Admin
+    private Long staffId;    // Null nếu là Customer
     private String username;
     private String password;
     private String role;
@@ -26,6 +27,8 @@ public class CustomUserDetails implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     }
 
+    @Override public String getUsername() { return username; }
+    @Override public String getPassword() { return password; }
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }

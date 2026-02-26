@@ -1,5 +1,6 @@
 package com.touring.touringbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -56,6 +57,10 @@ public class Tour {
     /* =====================
        QUAN HỆ
        ===================== */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id")
+    @JsonIgnore
+    private Staff staff;
 
     @OneToMany(mappedBy = "tour", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TourSchedule> schedules;

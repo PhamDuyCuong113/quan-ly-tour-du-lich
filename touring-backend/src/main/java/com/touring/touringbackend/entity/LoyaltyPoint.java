@@ -1,5 +1,6 @@
 package com.touring.touringbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,6 +19,7 @@ public class LoyaltyPoint {
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "customer_id")
+    @JsonIgnore
     private Customer customer;
 
     @Column(name = "total_points", nullable = false)

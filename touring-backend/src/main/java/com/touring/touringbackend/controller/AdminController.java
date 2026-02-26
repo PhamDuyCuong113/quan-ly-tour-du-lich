@@ -1,7 +1,11 @@
 package com.touring.touringbackend.controller;
 
 import com.touring.touringbackend.dto.admin.AdminStatsResponse;
+import com.touring.touringbackend.dto.admin.CustomerResponse;
+import com.touring.touringbackend.dto.auth.RegisterRequest;
 import com.touring.touringbackend.dto.passenger.PassengerResponse;
+import com.touring.touringbackend.entity.Customer;
+import com.touring.touringbackend.entity.Staff;
 import com.touring.touringbackend.service.AdminService;
 import com.touring.touringbackend.service.ExcelExportService; // THÊM IMPORT NÀY
 import com.touring.touringbackend.service.PassengerService;
@@ -9,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -56,4 +57,26 @@ public class AdminController {
         // Trả về danh sách toàn bộ đoàn đi cùng lịch trình này
         return ResponseEntity.ok(passengerService.getAllPassengersInSchedule(scheduleId));
     }
+
+    @GetMapping("/staffs")
+    public ResponseEntity<List<Staff>> getStaffs() {
+        return ResponseEntity.ok(adminService.getAllStaffs());
+    }
+
+    @GetMapping("/customers")
+    public ResponseEntity<List<CustomerResponse>> getCustomers() {
+        return ResponseEntity.ok(adminService.getAllCustomers());
+    }
+
+    @PostMapping("/staffs")
+    public ResponseEntity<String> createStaff(@RequestBody RegisterRequest req) {
+        return ResponseEntity.ok(adminService.createStaffAccount(req));
+    }
+
+    @PatchMapping("/staffs/{id}/toggle")
+    public ResponseEntity<String> toggleStaff(@PathVariable Long id) {
+        adminService.toggleStaffStatus(id);
+        return ResponseEntity.ok("Cập nhật trạng thái thành công");
+    }
+
 }

@@ -1,16 +1,16 @@
 import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children, roleRequired }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
     const token = localStorage.getItem('token');
-    const userRole = localStorage.getItem('role'); // Chúng ta sẽ lưu role vào đây lúc Login
+    const userRole = localStorage.getItem('role'); // 'ADMIN' | 'STAFF' | 'USER'
 
-    // 1. Nếu chưa đăng nhập -> Về trang Login
+    // 1. Chưa đăng nhập → login
     if (!token) {
         return <Navigate to="/login" replace />;
     }
 
-    // 2. Nếu yêu cầu quyền ADMIN mà user không phải ADMIN -> Về trang chủ
-    if (roleRequired && userRole !== roleRequired) {
+    // 2. Có yêu cầu role nhưng không đủ quyền → về trang chủ
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
         return <Navigate to="/" replace />;
     }
 
