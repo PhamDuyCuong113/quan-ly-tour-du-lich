@@ -25,7 +25,7 @@ public class TourService {
     private final TourRepository tourRepository;
     private final TourScheduleRepository tourScheduleRepository;
     private final ReviewRepository reviewRepository;
-    private final TourImageRepository tourImageRepository; // Thêm repo này
+    private final TourImageRepository tourImageRepository;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -218,9 +218,56 @@ public class TourService {
         return "Đã cập nhật lịch trình cho tour: " + tour.getTourName();
     }
 
+
+
+    /**
+     * 1. Cập nhật thông tin cơ bản của Tour
+     */
     @Transactional
-    public String deleteTourImage(Long imageId) {
+    public TourResponse updateTour(Long id, TourCreateRequest request) {
+        Tour tour = tourRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Tour ID: " + id));
+
+        tour.setTourName(request.tourName());
+        tour.setDestination(request.destination());
+        tour.setBasePrice(request.basePrice());
+        tour.setDurationDays(request.durationDays());
+        tour.setTourType(request.tourType());
+        tour.setDescription(request.description());
+
+        Tour saved = tourRepository.save(tour);
+        return mapToTourResponse(saved);
+    }
+
+    /**
+     * 2. Xóa một ảnh cụ thể của Tour
+     */
+    @Transactional
+    public void deleteTourImage(Long imageId) {
         tourImageRepository.deleteById(imageId);
-        return "Đã xóa ảnh thành công";
+    }
+
+    /**
+     * 3. Lưu/Cập nhật lịch trình chi tiết (Ngày 1, Ngày 2...)
+     */
+    @Transactional
+    public void updateItineraries(Long tourId, List<ItineraryRequest> requests) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Tour"));
+
+        // Bước A: Xóa sạch lịch trình cũ của tour này
+        itineraryRepository.deleteByTourTourId(tourId);
+
+        // Bước B: Thêm danh sách mới
+        List<Itinerary> newItineraries = requests.stream().map(req -> {
+            Itinerary item = new Itinerary();
+            item.setTour(tour);
+            item.setDayNumber(req.dayNumber());
+            item.setTitle(req.title());
+            item.setDescription(req.description());
+            return item;
+        }).toList();
+
+        itineraryRepository.saveAll(newItineraries);
     }
 }

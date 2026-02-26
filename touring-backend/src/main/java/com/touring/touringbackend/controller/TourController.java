@@ -4,9 +4,10 @@ import com.touring.touringbackend.dto.tour.*;
 import com.touring.touringbackend.service.TourService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,41 +19,24 @@ public class TourController {
 
     private final TourService tourService;
 
-    /**
-     * 1. Lấy danh sách Tour đang mở (Dành cho mọi người)
-     */
     @GetMapping
     public ResponseEntity<List<TourResponse>> getAllTours() {
         return ResponseEntity.ok(tourService.getAllAvailableTours());
     }
 
-    /**
-     * 2. Lấy thông tin chi tiết Tour và các lịch khởi hành (Dành cho mọi người)
-     */
     @GetMapping("/{id}")
     public ResponseEntity<TourDetailResponse> getTourDetail(@PathVariable Long id) {
         return ResponseEntity.ok(tourService.getTourDetail(id));
     }
 
-    /**
-     * 3. Tạo Tour mới (Chỉ dành cho ADMIN)
-     */
     @PostMapping
     public ResponseEntity<TourResponse> createTour(@Valid @RequestBody TourCreateRequest request) {
         return ResponseEntity.ok(tourService.createTour(request));
     }
 
-    /**
-     * 4. Thêm lịch khởi hành cho Tour (Chỉ dành cho ADMIN)
-     * Đường dẫn: POST /api/tours/{id}/schedules
-     */
     @PostMapping("/{id}/schedules")
-    public ResponseEntity<String> addSchedule(
-            @PathVariable Long id,
-            @Valid @RequestBody ScheduleRequest request) {
-
-        String result = tourService.createSchedule(id, request);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<String> addSchedule(@PathVariable Long id, @Valid @RequestBody ScheduleRequest request) {
+        return ResponseEntity.ok(tourService.createSchedule(id, request));
     }
 
     @GetMapping("/search")
@@ -60,17 +44,12 @@ public class TourController {
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice) {
-
         return ResponseEntity.ok(tourService.searchTours(destination, minPrice, maxPrice));
     }
 
     @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadImage(
-            @PathVariable Long id,
-            @RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
-
-        String url = tourService.uploadTourImage(id, file);
-        return ResponseEntity.ok("Upload thành công! Xem ảnh tại: " + url);
+    public ResponseEntity<String> uploadImage(@PathVariable Long id, @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok("Upload thành công! Xem ảnh tại: " + tourService.uploadTourImage(id, file));
     }
 
     @GetMapping("/{id}/related")
@@ -78,11 +57,21 @@ public class TourController {
         return ResponseEntity.ok(tourService.getRelatedTours(id));
     }
 
+    // GỘP LẠI THÀNH 1 HÀM DUY NHẤT ĐỂ HẾT LỖI AMBIGUOUS
     @PostMapping("/{id}/itineraries")
-    public ResponseEntity<String> addItinerary(
-            @PathVariable Long id,
-            @RequestBody List<ItineraryRequest> requests) {
+    public ResponseEntity<String> updateItineraries(@PathVariable Long id, @RequestBody List<ItineraryRequest> requests) {
+        tourService.updateItineraries(id, requests);
+        return ResponseEntity.ok("Cập nhật lịch trình thành công");
+    }
 
-        return ResponseEntity.ok(tourService.addItinerary(id, requests));
+    @PutMapping("/{id}")
+    public ResponseEntity<TourResponse> updateTour(@PathVariable Long id, @RequestBody TourCreateRequest request) {
+        return ResponseEntity.ok(tourService.updateTour(id, request));
+    }
+
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<String> deleteImage(@PathVariable Long imageId) {
+        tourService.deleteTourImage(imageId);
+        return ResponseEntity.ok("Đã xóa ảnh thành công");
     }
 }
