@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -274,21 +275,21 @@ public class TourService {
     @Transactional
     public void updateItineraries(Long tourId, List<ItineraryRequest> requests) {
         Tour tour = tourRepository.findById(tourId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Tour"));
+                .orElseThrow(() -> new RuntimeException("Tour not found"));
 
-        // Bước A: Xóa sạch lịch trình cũ của tour này
+        // 1. Xóa sạch cái cũ (Nhờ @Modifying ở trên nó sẽ chạy thật)
         itineraryRepository.deleteByTourTourId(tourId);
 
-        // Bước B: Thêm danh sách mới
-        List<Itinerary> newItineraries = requests.stream().map(req -> {
-            Itinerary item = new Itinerary();
-            item.setTour(tour);
-            item.setDayNumber(req.dayNumber());
-            item.setTitle(req.title());
-            item.setDescription(req.description());
-            return item;
-        }).toList();
+        // 2. Lưu danh sách mới
+        List<Itinerary> newItems = requests.stream().map(req -> {
+            Itinerary it = new Itinerary();
+            it.setTour(tour); // Quan trọng nhất là gán Tour vào từng Itinerary
+            it.setDayNumber(req.dayNumber());
+            it.setTitle(req.title());
+            it.setDescription(req.description());
+            return it;
+        }).collect(Collectors.toList());
 
-        itineraryRepository.saveAll(newItineraries);
+        itineraryRepository.saveAll(newItems);
     }
 }

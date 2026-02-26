@@ -23,7 +23,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
 
     // Lấy chi tiết Tour kèm theo Lịch trình (Schedules) và Ảnh (Images)
     // Dùng @EntityGraph để tránh lỗi Lazy Loading và tối ưu số câu lệnh SELECT
-    @EntityGraph(attributePaths = {"schedules", "images"})
+    @EntityGraph(attributePaths = {"schedules", "images", "itineraries"})
     Optional<Tour> findById(Long id);
 
     List<Tour> findByDestinationContainingIgnoreCaseAndBasePriceBetweenAndStatus(
