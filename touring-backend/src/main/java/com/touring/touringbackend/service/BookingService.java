@@ -58,7 +58,7 @@ public class BookingService {
 
             if (promoOwner != null) {
                 // ĐÂY LÀ VOUCHER CỦA STAFF: Phải kiểm tra xem chủ voucher có đúng là chủ tour không
-                if (tourOwner == null || !promoOwner.getId().equals(tourOwner.getId())) {
+                if (tourOwner == null || !promoOwner.getStaffId().equals(tourOwner.getStaffId())) {
                     throw new RuntimeException("Mã giảm giá này chỉ áp dụng cho các tour của đại lý: " + promoOwner.getFullName());
                 }
             }

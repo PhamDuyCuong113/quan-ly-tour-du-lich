@@ -2,28 +2,32 @@ package com.touring.touringbackend.service;
 
 import com.touring.touringbackend.dto.admin.AdminStatsResponse;
 import com.touring.touringbackend.dto.admin.CustomerResponse;
+import com.touring.touringbackend.dto.admin.StaffResponse;
 import com.touring.touringbackend.dto.auth.RegisterRequest;
 import com.touring.touringbackend.entity.*;
-import com.touring.touringbackend.repository.AccountRepository;
-import com.touring.touringbackend.repository.BookingRepository;
-import com.touring.touringbackend.repository.CustomerRepository;
-import com.touring.touringbackend.repository.StaffRepository;
+import com.touring.touringbackend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AdminService {
+
     private final BookingRepository bookingRepository;
     private final CustomerRepository customerRepository;
     private final StaffRepository staffRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Lấy thống kê doanh thu toàn sàn
+     */
+    @Transactional(readOnly = true)
     public AdminStatsResponse getStats() {
         BigDecimal revenue = bookingRepository.getTotalRevenue();
         if (revenue == null) revenue = BigDecimal.ZERO;
@@ -34,14 +38,27 @@ public class AdminService {
         return new AdminStatsResponse(revenue, bookings, customers);
     }
 
-    public List<Staff> getAllStaffs() {
-        return staffRepository.findAll();
+    /**
+     * Quản lý nhân viên: Lấy danh sách DTO
+     */
+    @Transactional(readOnly = true)
+    public List<StaffResponse> getAllStaffs() {
+        return staffRepository.findAll().stream().map(s -> new StaffResponse(
+                s.getStaffId(),
+                s.getFullName(),
+                s.getEmail(),
+                s.getPhone(),
+                s.getStatus() != null ? s.getStatus().name() : "INACTIVE",
+                s.getAccount() != null ? s.getAccount().getUsername() : "N/A"
+        )).toList();
     }
 
+    /**
+     * Quản lý khách hàng: Lấy danh sách DTO kèm trạng thái tài khoản
+     */
     @Transactional(readOnly = true)
     public List<CustomerResponse> getAllCustomers() {
         return customerRepository.findAll().stream().map(c -> {
-            // Lấy thông tin điểm nếu có, không có thì mặc định 0
             int points = 0;
             LoyaltyLevel level = LoyaltyLevel.SILVER;
 
@@ -55,19 +72,24 @@ public class AdminService {
                     c.getFullName(),
                     c.getEmail(),
                     c.getPhone(),
-                    c.getCustomerType(),
+                    c.getCustomerType() != null ? c.getCustomerType() : CustomerType.NORMAL,
                     points,
-                    level
+                    level, // Ở DTO nếu để String thì dùng .name()
+                    c.getAccount() != null ? c.getAccount().getStatus().name() : "LOCKED"
             );
         }).toList();
     }
-    // Tạo tài khoản Staff (Kết hợp tạo Account và Staff)
+
+    /**
+     * Tạo tài khoản nhân viên mới (Role STAFF)
+     */
     @Transactional
     public String createStaffAccount(RegisterRequest req) {
         if (accountRepository.existsByUsername(req.username())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
-        // 1. Tạo Account role STAFF
+
+        // 1. Tạo Account
         Account acc = new Account();
         acc.setUsername(req.username());
         acc.setPasswordHash(passwordEncoder.encode(req.password()));
@@ -75,7 +97,7 @@ public class AdminService {
         acc.setStatus(AccountStatus.ACTIVE);
         accountRepository.save(acc);
 
-        // 2. Tạo bản ghi Staff
+        // 2. Tạo Staff gắn với Account
         Staff staff = new Staff();
         staff.setAccount(acc);
         staff.setFullName(req.fullName());
@@ -86,21 +108,37 @@ public class AdminService {
 
         return "Tạo tài khoản nhân viên thành công!";
     }
+
+    /**
+     * Khóa/Mở khóa Nhân viên
+     */
     @Transactional
     public void toggleStaffStatus(Long staffId) {
         Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
 
-        // Đổi trạng thái Staff
-        StaffStatus newStatus = (staff.getStatus() == StaffStatus.ACTIVE)
-                ? StaffStatus.INACTIVE : StaffStatus.ACTIVE;
+        StaffStatus newStatus = (staff.getStatus() == StaffStatus.ACTIVE) ? StaffStatus.INACTIVE : StaffStatus.ACTIVE;
         staff.setStatus(newStatus);
 
-        // Đồng bộ khóa luôn tài khoản đăng nhập (Account)
-        Account acc = staff.getAccount();
-        acc.setStatus(newStatus == StaffStatus.ACTIVE ? AccountStatus.ACTIVE : AccountStatus.LOCKED);
-
+        if (staff.getAccount() != null) {
+            staff.getAccount().setStatus(newStatus == StaffStatus.ACTIVE ? AccountStatus.ACTIVE : AccountStatus.LOCKED);
+        }
         staffRepository.save(staff);
-        accountRepository.save(acc);
+    }
+
+    /**
+     * MỚI: Khóa/Mở khóa Khách hàng (Dành cho nút bấm ở trang Quản lý khách hàng)
+     */
+    @Transactional
+    public void toggleCustomerStatus(Long customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
+
+        Account acc = customer.getAccount();
+        if (acc != null) {
+            AccountStatus newStatus = (acc.getStatus() == AccountStatus.ACTIVE) ? AccountStatus.LOCKED : AccountStatus.ACTIVE;
+            acc.setStatus(newStatus);
+            accountRepository.save(acc);
+        }
     }
 }

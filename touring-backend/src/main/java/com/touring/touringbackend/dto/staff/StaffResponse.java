@@ -1,7 +1,7 @@
 package com.touring.touringbackend.dto.admin;
 
 public record StaffResponse(
-        Long id,
+        Long staffId,
         String fullName,
         String email,
         String phone,

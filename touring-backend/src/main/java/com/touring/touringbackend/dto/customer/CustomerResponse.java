@@ -10,5 +10,6 @@ public record CustomerResponse(
         String phone,
         CustomerType customerType,
         Integer totalPoints,
-        LoyaltyLevel level
+        LoyaltyLevel level,
+        String accountStatus
 ) {}

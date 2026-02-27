@@ -46,13 +46,13 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // Admin APIs
-                        .requestMatchers(HttpMethod.POST, "/api/tours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/tours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/tours/*/itineraries").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/promotions/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/promotions/**").hasRole("ADMIN")
-                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/tours/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/api/tours/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/tours/*/itineraries").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/promotions/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/promotions/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasAnyRole("ADMIN", "STAFF")
 
                         // Customer/Authenticated APIs
                         .requestMatchers("/api/auth/me").authenticated()

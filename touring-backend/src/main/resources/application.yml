@@ -5,6 +5,11 @@ spring:
   application:
     name: tour-management
 
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
   datasource:
     url: jdbc:mysql://localhost:3306/tour_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
     username: root
@@ -39,3 +44,4 @@ spring:
 # Khối upload nằm riêng (vì nó không thuộc spring gốc)
 upload:
   path: G:/project2/touring-backend/uploads/
+

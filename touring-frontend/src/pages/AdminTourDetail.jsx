@@ -13,11 +13,10 @@ const AdminTourDetail = () => {
 
     // --- 1. STATES ---
     const [tour, setTour] = useState(null);
-    const [activeTab, setActiveTab] = useState('basic');
+    const [activeTab, setActiveTab] = useState('basic'); // basic, images, itinerary, schedules
     const [itineraries, setItineraries] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // States cho Modal Lịch trình
     const [showAddScheduleModal, setShowAddScheduleModal] = useState(false);
     const [newSchedule, setNewSchedule] = useState({
         departureDate: '',
@@ -32,7 +31,7 @@ const AdminTourDetail = () => {
         try {
             const res = await api.get(`/tours/${id}`);
             setTour(res.data);
-            // Sắp xếp ngày 1, 2, 3... cho mảng hành trình
+            // Sắp xếp ngày 1, 2, 3...
             const sortedIt = (res.data.itineraries || []).sort((a, b) => a.dayNumber - b.dayNumber);
             setItineraries(sortedIt);
         } catch (error) {
@@ -47,10 +46,28 @@ const AdminTourDetail = () => {
     // --- 3. XỬ LÝ TOUR (THÔNG TIN CHUNG) ---
     const handleUpdateTour = async () => {
         try {
-            await api.put(`/tours/${id}`, tour);
+            // KIỂM TRA TRƯỚC KHI GỬI
+            if (!tour.tourCode || !tour.tourType) {
+                alert("Lỗi: Mã tour và Loại tour không được để trống!");
+                return;
+            }
+
+            const payload = {
+                tourCode: tour.tourCode,
+                tourName: tour.tourName,
+                destination: tour.destination,
+                basePrice: parseFloat(tour.basePrice),
+                durationDays: parseInt(tour.durationDays),
+                tourType: tour.tourType,
+                description: tour.description
+            };
+
+            await api.put(`/tours/${id}`, payload);
             alert("Cập nhật thông tin thành công!");
-            fetchDetail();
-        } catch (error) { alert("Lỗi cập nhật tour"); }
+            fetchDetail(); // Load lại dữ liệu
+        } catch (error) {
+            alert(error.response?.data?.message || "Lỗi cập nhật tour");
+        }
     };
 
     // --- 4. XỬ LÝ HÌNH ẢNH ---
@@ -63,14 +80,33 @@ const AdminTourDetail = () => {
         }
     };
 
-    const handleUploadImage = async (file) => {
+    const handleUploadImages = async (e) => {
+        const files = e.target.files; // Lấy danh sách các file đã chọn
+        if (!files || files.length === 0) return;
+
         const formData = new FormData();
-        formData.append('file', file);
+        // VÒNG LẶP: Thêm từng file vào cùng một Key tên là "files"
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+
         try {
-            await api.post(`/tours/${id}/upload`, formData);
-            fetchDetail();
-        } catch (error) { alert("Lỗi khi tải ảnh lên!"); }
+            setLoading(true);
+            // Gọi API với mảng files
+            await api.post(`/tours/${id}/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            alert(`Đã tải lên ${files.length} ảnh thành công!`);
+            fetchDetail(); // Load lại để hiện ảnh mới
+        } catch (error) {
+            alert("Lỗi upload: " + (error.response?.data?.message || "Kích thước quá lớn"));
+        } finally {
+            setLoading(false);
+            e.target.value = ''; // 👈 FIX LỖI KHÔNG UPLOAD LẠI ĐƯỢC CÙNG ẢNH
+        }
     };
+
+
 
     // --- 5. XỬ LÝ HÀNH TRÌNH (ITINERARY) ---
     const addItineraryRow = () => {
@@ -93,12 +129,13 @@ const AdminTourDetail = () => {
 
     const saveItinerary = async () => {
         try {
-            // Chỉ gửi những ngày đã điền tiêu đề
-            const cleanData = itineraries.filter(it => it.title?.trim() !== '');
+            const cleanData = itineraries.filter(it => it.title.trim() !== '');
             await api.post(`/tours/${id}/itineraries`, cleanData);
-            alert("Cập nhật hành trình chi tiết thành công!");
+            alert("Lưu hành trình thành công!");
             fetchDetail();
-        } catch (error) { alert("Lỗi khi lưu hành trình"); }
+        } catch (error) {
+            alert("Lỗi khi lưu hành trình");
+        }
     };
 
     // --- 6. XỬ LÝ LỊCH KHỞI HÀNH (SCHEDULES) ---
@@ -133,17 +170,19 @@ const AdminTourDetail = () => {
             const schedule = tour.schedules.find(s => s.scheduleId === sId);
             const updatedData = { ...schedule, [field]: value };
             await api.put(`/tours/schedules/${sId}`, updatedData);
-        } catch (error) { console.error("Lỗi cập nhật nhanh"); }
+        } catch (error) { console.error("Lỗi cập nhật lịch trình"); }
     };
 
     if (loading && !tour) return <div className="p-20 text-center font-black animate-pulse text-gray-400 text-2xl uppercase">Đang tải dữ liệu...</div>;
 
     return (
         <div className="container mx-auto p-6 max-w-6xl">
+            {/* Quay lại */}
             <button onClick={() => navigate('/admin/tours')} className="flex items-center gap-2 text-gray-400 mb-6 hover:text-black font-bold uppercase text-xs transition-all">
                 <ArrowLeft size={16} /> Quay lại danh sách
             </button>
 
+            {/* Header thông tin */}
             <div className="flex justify-between items-center mb-10">
                 <h1 className="text-3xl font-black uppercase tracking-tighter italic">Biên tập: <span className="text-blue-600">{tour?.tourName}</span></h1>
                 <div className="flex gap-2">
@@ -165,26 +204,49 @@ const AdminTourDetail = () => {
                 ))}
             </div>
 
+            {/* NỘI DUNG TỪNG TAB */}
             <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 min-h-[500px]">
 
-                {/* TAB 1: THÔNG TIN CƠ BẢN */}
+                {/* TAB 1: THÔNG TIN CƠ BẢN (ĐÃ FIX VỊ TRÍ) */}
                 {activeTab === 'basic' && (
                     <div className="grid grid-cols-2 gap-8 animate-in fade-in duration-500">
-                        <div className="col-span-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Tên Tour hiển thị</label>
-                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500" value={tour?.tourName || ''} onChange={e => setTour({...tour, tourName: e.target.value})} />
+                        {/* Hàng 1: Mã và Loại */}
+                        <div className="col-span-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Mã Tour (Cố định)</label>
+                            <input className="w-full p-5 bg-gray-100 rounded-2xl mt-2 font-bold text-gray-400 border-none outline-none cursor-not-allowed" value={tour?.tourCode || ''} disabled />
                         </div>
                         <div className="col-span-1">
-                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Địa danh</label>
-                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500" value={tour?.destination || ''} onChange={e => setTour({...tour, destination: e.target.value})} />
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Loại Tour</label>
+                            <select
+                                className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500"
+                                value={tour?.tourType || ''}
+                                onChange={e => setTour({...tour, tourType: e.target.value})}
+                            >
+                                <option value="DOMESTIC">Trong nước</option>
+                                <option value="INTERNATIONAL">Quốc tế</option>
+                            </select>
+                        </div>
+
+                        {/* Hàng 2: Tên Tour */}
+                        <div className="col-span-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Tên Tour hiển thị</label>
+                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.tourName || ''} onChange={e => setTour({...tour, tourName: e.target.value})} />
+                        </div>
+
+                        {/* Hàng 3: Địa danh, Giá, Số ngày */}
+                        <div className="col-span-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Địa danh (Destination)</label>
+                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.destination || ''} onChange={e => setTour({...tour, destination: e.target.value})} />
                         </div>
                         <div className="col-span-1">
                             <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Giá sàn (VNĐ)</label>
-                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500" type="number" value={tour?.basePrice || ''} onChange={e => setTour({...tour, basePrice: e.target.value})} />
+                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" type="number" value={tour?.basePrice || ''} onChange={e => setTour({...tour, basePrice: e.target.value})} />
                         </div>
+
+                        {/* Hàng 4: Mô tả */}
                         <div className="col-span-2 border-t pt-8 mt-4">
                             <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Mô tả bài viết giới thiệu</label>
-                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-64 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500" value={tour?.description || ''} onChange={e => setTour({...tour, description: e.target.value})} />
+                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-64 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.description || ''} onChange={e => setTour({...tour, description: e.target.value})} />
                         </div>
                     </div>
                 )}
@@ -206,35 +268,38 @@ const AdminTourDetail = () => {
                         </div>
                         <label className="block w-full p-20 border-4 border-dashed border-gray-100 rounded-[3.5rem] text-center cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all">
                             <ImageIcon className="mx-auto mb-4 text-gray-200" size={64} />
-                            <p className="font-black text-gray-400 uppercase text-xs tracking-widest">Nhấn để tải ảnh mới từ máy chủ Laptop</p>
-                            <input type="file" className="hidden" onChange={(e) => handleUploadImage(e.target.files[0])} />
+                            <p className="font-black text-gray-400 uppercase text-xs tracking-widest">Tải ảnh mới từ máy chủ Laptop</p>
+                            <input
+                                type="file"
+                                className="hidden"
+                                multiple
+                                onChange={handleUploadImages}
+                            />
                         </label>
                     </div>
                 )}
 
-                {/* TAB 3: HÀNH TRÌNH ĐỘNG */}
+                {/* TAB 3: HÀNH TRÌNH CHI TIẾT */}
                 {activeTab === 'itinerary' && (
                     <div className="space-y-8 animate-in fade-in duration-500">
                         {itineraries.map((it, idx) => (
                             <div key={idx} className="relative p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 shadow-sm">
                                 <button onClick={() => removeItineraryRow(idx)} className="absolute top-6 right-6 p-2 bg-white text-red-400 rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-all"><X size={20} /></button>
                                 <div className="flex items-center gap-6 mb-6">
-                                    <span className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg italic">
-                                        {it.dayNumber}
-                                    </span>
+                                    <span className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg italic">{it.dayNumber}</span>
                                     <div className="flex-1">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Tiêu đề ngày</label>
                                         <input className="w-full p-4 bg-white rounded-2xl mt-1 font-bold text-gray-800 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" value={it.title || ''} onChange={(e) => handleItineraryChange(idx, 'title', e.target.value)} />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Hoạt động chi tiết</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Hoạt động chi tiết</label>
                                     <textarea className="w-full p-6 bg-white rounded-[2rem] mt-1 h-32 outline-none focus:ring-2 focus:ring-blue-500 border-none text-gray-600 font-medium leading-relaxed shadow-sm" value={it.description || ''} onChange={(e) => handleItineraryChange(idx, 'description', e.target.value)} />
                                 </div>
                             </div>
                         ))}
-                        <button onClick={addItineraryRow} className="w-full py-8 border-4 border-dashed border-gray-100 text-gray-400 rounded-[3rem] font-black hover:text-blue-600 hover:border-blue-100 flex items-center justify-center gap-3 uppercase tracking-tighter transition-all group">
-                            <Plus size={32} className="group-hover:scale-125 transition-transform" /> THÊM NGÀY TIẾP THEO
+                        <button onClick={addItineraryRow} className="w-full py-8 border-4 border-dashed border-gray-100 text-gray-400 rounded-[3rem] font-black hover:text-blue-600 hover:border-blue-100 transition-all flex items-center justify-center gap-3 uppercase tracking-tighter group">
+                            <Plus size={28} className="group-hover:scale-125 transition-transform" /> THÊM NGÀY TIẾP THEO
                         </button>
                     </div>
                 )}
@@ -265,7 +330,7 @@ const AdminTourDetail = () => {
                 )}
             </div>
 
-            {/* --- MODAL THÊM LỊCH TRÌNH --- */}
+            {/* MODAL THÊM LỊCH TRÌNH */}
             {showAddScheduleModal && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl p-10 animate-in zoom-in-95 duration-300">

@@ -2,6 +2,7 @@ package com.touring.touringbackend.controller;
 
 import com.touring.touringbackend.dto.admin.AdminStatsResponse;
 import com.touring.touringbackend.dto.admin.CustomerResponse;
+import com.touring.touringbackend.dto.admin.StaffResponse;
 import com.touring.touringbackend.dto.auth.RegisterRequest;
 import com.touring.touringbackend.dto.passenger.PassengerResponse;
 import com.touring.touringbackend.entity.Customer;
@@ -59,7 +60,7 @@ public class AdminController {
     }
 
     @GetMapping("/staffs")
-    public ResponseEntity<List<Staff>> getStaffs() {
+    public ResponseEntity<List<StaffResponse>> getStaffs() {
         return ResponseEntity.ok(adminService.getAllStaffs());
     }
 

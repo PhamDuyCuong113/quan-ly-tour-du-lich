@@ -6,10 +6,12 @@ import java.util.List;
 
 public record TourDetailResponse(
         Long tourId,
+        String tourCode,
         String tourName,
         String description,
         String destination,
         BigDecimal basePrice,
+        String tourType,
         Double averageRating,
         Long totalReviews,
         List<ScheduleDTO> schedules,
@@ -19,6 +21,7 @@ public record TourDetailResponse(
             Long scheduleId,
             LocalDate departureDate,
             LocalDate returnDate,
+            Integer maxSlots,
             Integer availableSlots,
             BigDecimal price
     ) {}

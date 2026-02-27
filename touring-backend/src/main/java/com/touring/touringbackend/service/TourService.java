@@ -61,8 +61,12 @@ public class TourService {
         List<TourDetailResponse.ScheduleDTO> scheduleDTOs = tour.getSchedules().stream()
                 .filter(s -> s.getStatus() == TourScheduleStatus.OPEN)
                 .map(s -> new TourDetailResponse.ScheduleDTO(
-                        s.getScheduleId(), s.getDepartureDate(),
-                        s.getReturnDate(), s.getAvailableSlots(), s.getPrice()
+                        s.getScheduleId(),
+                        s.getDepartureDate(),
+                        s.getReturnDate(),
+                        s.getMaxSlots(),
+                        s.getAvailableSlots(),
+                        s.getPrice()
                 )).toList();
 
         List<TourDetailResponse.ItineraryDTO> itineraryDTOs = tour.getItineraries().stream()
@@ -72,11 +76,17 @@ public class TourService {
                 )).toList();
 
         return new TourDetailResponse(
-                tour.getTourId(), tour.getTourName(), tour.getDescription(),
-                tour.getDestination(), tour.getBasePrice(),
+                tour.getTourId(),
+                tour.getTourCode() != null ? tour.getTourCode() : "N/A", // Check null
+                tour.getTourName(),
+                tour.getDescription(),
+                tour.getDestination(),
+                tour.getBasePrice(),
+                tour.getTourType() != null ? tour.getTourType().name() : "DOMESTIC", // Check null
                 avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0,
                 totalReviews != null ? totalReviews : 0L,
-                scheduleDTOs, itineraryDTOs
+                scheduleDTOs,
+                itineraryDTOs
         );
     }
 
@@ -222,24 +232,32 @@ public class TourService {
     }
 
     @Transactional
-    public String uploadTourImage(Long tourId, MultipartFile file, CustomUserDetails currentUser) {
-        Tour tour = tourRepository.findById(tourId).orElseThrow();
-        checkOwnership(tour, currentUser);
+    public void uploadTourImages(Long tourId, MultipartFile[] files, CustomUserDetails currentUser) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new RuntimeException("Tour không tồn tại"));
+
+        checkOwnership(tour, currentUser); // Kiểm tra quyền chủ tour
+
         try {
             File directory = new File(uploadPath);
             if (!directory.exists()) directory.mkdirs();
 
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(uploadPath, fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            for (MultipartFile file : files) {
+                // 1. Tạo tên file duy nhất cho từng ảnh
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                Path filePath = Paths.get(uploadPath, fileName);
 
-            TourImage tourImage = new TourImage();
-            tourImage.setTour(tour);
-            tourImage.setImageUrl("http://localhost:8080/uploads/" + fileName);
-            tourImageRepository.save(tourImage);
-            return tourImage.getImageUrl();
+                // 2. Lưu file vật lý vào laptop
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // 3. Lưu vào Database
+                TourImage tourImage = new TourImage();
+                tourImage.setTour(tour);
+                tourImage.setImageUrl("http://localhost:8080/uploads/" + fileName);
+                tourImageRepository.save(tourImage);
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi upload: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage());
         }
     }
 
@@ -269,7 +287,7 @@ public class TourService {
 
     private void checkOwnership(Tour tour, CustomUserDetails user) {
         if (user.getRole().equals("ADMIN")) return;
-        if (tour.getStaff() == null || !tour.getStaff().getId().equals(user.getStaffId())) {
+        if (tour.getStaff() == null || !tour.getStaff().getStaffId().equals(user.getStaffId())) {
             throw new RuntimeException("Bạn không phải chủ sở hữu của Tour này!");
         }
     }

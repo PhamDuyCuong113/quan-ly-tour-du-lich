@@ -40,7 +40,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         // Nếu là STAFF hoặc ADMIN -> lấy staffId (vì Admin cũng thường có bản ghi Staff để quản lý)
         else {
             staffId = staffRepository.findByAccountAccountId(acc.getAccountId())
-                    .map(Staff::getId) // Giả sử trong Staff entity bạn đặt id là Long id
+                    .map(Staff::getStaffId) // Giả sử trong Staff entity bạn đặt id là Long id
                     .orElse(null);
         }
 

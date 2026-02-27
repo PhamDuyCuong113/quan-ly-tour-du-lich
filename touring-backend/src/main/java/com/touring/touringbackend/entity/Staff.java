@@ -24,7 +24,7 @@ public class Staff {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "staff_id")
-    private Long id;
+    private Long staffId;
 
     @OneToOne
     @JoinColumn(name = "account_id")

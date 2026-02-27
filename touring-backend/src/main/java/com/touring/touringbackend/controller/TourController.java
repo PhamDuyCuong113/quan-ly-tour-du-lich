@@ -110,12 +110,13 @@ public class TourController {
      * Upload ảnh (Chỉ chủ tour mới được upload)
      */
     @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadImage(
+    public ResponseEntity<String> uploadImages(
             @PathVariable Long id,
-            @RequestPart("file") MultipartFile file,
+            @RequestPart("files") MultipartFile[] files, // Đổi từ file -> files và thêm mảng []
             @AuthenticationPrincipal CustomUserDetails currentUser) {
-        String url = tourService.uploadTourImage(id, file, currentUser);
-        return ResponseEntity.ok("Upload thành công! URL: " + url);
+
+        tourService.uploadTourImages(id, files, currentUser);
+        return ResponseEntity.ok("Đã tải lên thành công " + files.length + " ảnh.");
     }
 
     /**
