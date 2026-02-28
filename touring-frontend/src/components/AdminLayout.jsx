@@ -21,7 +21,7 @@ const AdminLayout = () => {
 
         // Chỉ Admin mới thấy
         { path: '/admin/staffs', name: 'Quản lý Nhân viên', icon: <Users size={20} />, roles: ['ADMIN'] },
-        { path: '/admin/customers', name: 'Quản lý Khách hàng', icon: <UserCircle size={20} />, roles: ['ADMIN'] },
+        { path: '/admin/customers', name: 'Quản lý Khách hàng', icon: <UserCircle size={20} />, roles: ['ADMIN', 'STAFF'] },
     ];
 
     // Lọc menu dựa trên Role của người đang đăng nhập

@@ -54,10 +54,25 @@ const AdminStaff = () => {
         }
     };
 
-    const handleToggleStatus = async (id) => {
-        if (window.confirm("Bạn muốn thay đổi trạng thái hoạt động của nhân viên này?")) {
-            await api.patch(`/admin/staffs/${id}/toggle`);
-            fetchStaffs(); // Load lại bảng
+    const handleToggleStatus = async (staff) => {
+        // Lấy ID thông minh: thử cả 'id' và 'staffId'
+        const id = staff.id || staff.staffId;
+
+        if (!id) {
+            console.error("Không tìm thấy ID của nhân viên:", staff);
+            return;
+        }
+
+        const action = staff.status === 'ACTIVE' ? "KHÓA" : "MỞ KHÓA";
+        if (window.confirm(`Bạn có chắc muốn ${action} nhân viên này?`)) {
+            try {
+                await api.patch(`/admin/staffs/${id}/toggle`);
+                fetchStaffs();
+                alert("Cập nhật thành công!");
+
+            } catch (error) {
+                alert("Lỗi: " + (error.response?.data?.message || "Không thể thực hiện"));
+            }
         }
     };
 
@@ -104,11 +119,11 @@ const AdminStaff = () => {
                             </td>
                             <td className="p-6 text-right">
                                 <button
-                                    onClick={() => handleToggleStatus(s.id)}
+                                    // TRUYỀN NGUYÊN CẢ ĐỐI TƯỢNG 's' VÀO THAY VÌ CHỈ TRUYỀN 's.id'
+                                    onClick={() => handleToggleStatus(s)}
                                     className={`p-2 rounded-xl transition-all ${
                                         s.status === 'ACTIVE' ? 'text-red-400 hover:bg-red-50' : 'text-green-400 hover:bg-green-50'
                                     }`}
-                                    title={s.status === 'ACTIVE' ? "Dừng hoạt động" : "Kích hoạt lại"}
                                 >
                                     {s.status === 'ACTIVE' ? <X size={20} /> : <BadgeCheck size={20} />}
                                 </button>

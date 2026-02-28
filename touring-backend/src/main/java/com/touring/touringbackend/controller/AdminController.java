@@ -7,6 +7,7 @@ import com.touring.touringbackend.dto.auth.RegisterRequest;
 import com.touring.touringbackend.dto.passenger.PassengerResponse;
 import com.touring.touringbackend.entity.Customer;
 import com.touring.touringbackend.entity.Staff;
+import com.touring.touringbackend.security.CustomUserDetails;
 import com.touring.touringbackend.service.AdminService;
 import com.touring.touringbackend.service.ExcelExportService; // THÊM IMPORT NÀY
 import com.touring.touringbackend.service.PassengerService;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -80,4 +82,19 @@ public class AdminController {
         return ResponseEntity.ok("Cập nhật trạng thái thành công");
     }
 
+    @PatchMapping("/customers/{id}/toggle")
+    public ResponseEntity<String> toggleCustomer(@PathVariable Long id) {
+        adminService.toggleCustomerStatus(id);
+        return ResponseEntity.ok("Cập nhật trạng thái khách hàng thành công");
+    }
+
+    // Trong AdminController.java
+    @GetMapping("/my-customers")
+    public ResponseEntity<List<CustomerResponse>> getMyCustomers(@AuthenticationPrincipal CustomUserDetails user) {
+        // Nếu là Admin thì lấy hết, nếu là Staff thì chỉ lấy khách của mình
+        if (user.getRole().equals("ADMIN")) {
+            return ResponseEntity.ok(adminService.getAllCustomers());
+        }
+        return ResponseEntity.ok(adminService.getCustomersByStaff(user.getStaffId()));
+    }
 }

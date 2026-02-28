@@ -65,7 +65,7 @@ const Navbar = () => {
                             </Link>
 
                             {/* Menu dành riêng cho ADMIN */}
-                            {user.role === 'ADMIN' && (
+                            {user.role === 'ADMIN' || user.role ==='STAFF' && (
                                 <Link to="/admin" className="flex items-center text-red-500 font-bold hover:text-red-700 bg-red-50 px-3 py-1 rounded-full transition-colors">
                                     <ShieldCheck className="w-4 h-4 mr-1" /> Quản lý
                                 </Link>

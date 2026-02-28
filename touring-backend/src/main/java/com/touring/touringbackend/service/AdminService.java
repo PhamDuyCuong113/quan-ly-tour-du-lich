@@ -45,11 +45,13 @@ public class AdminService {
     public List<StaffResponse> getAllStaffs() {
         return staffRepository.findAll().stream().map(s -> new StaffResponse(
                 s.getStaffId(),
-                s.getFullName(),
-                s.getEmail(),
-                s.getPhone(),
-                s.getStatus() != null ? s.getStatus().name() : "INACTIVE",
-                s.getAccount() != null ? s.getAccount().getUsername() : "N/A"
+                s.getFullName() != null ? s.getFullName() : "N/A",
+                s.getEmail() != null ? s.getEmail() : "Chưa có Email",
+                s.getPhone() != null ? s.getPhone() : "Chưa có SĐT",
+                // Nếu NULL thì mặc định trả về ACTIVE để hiển thị màu xanh
+                s.getAccount() != null ? s.getAccount().getUsername() : "N/A",
+                s.getStatus() != null ? s.getStatus().name() : "ACTIVE"
+
         )).toList();
     }
 
@@ -135,10 +137,41 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
 
         Account acc = customer.getAccount();
-        if (acc != null) {
-            AccountStatus newStatus = (acc.getStatus() == AccountStatus.ACTIVE) ? AccountStatus.LOCKED : AccountStatus.ACTIVE;
-            acc.setStatus(newStatus);
-            accountRepository.save(acc);
+        if (acc == null) throw new RuntimeException("Khách hàng không có tài khoản đăng nhập");
+
+        // Logic an toàn: Nếu status bị NULL thì coi như đang ACTIVE để khóa lại
+        AccountStatus currentStatus = acc.getStatus();
+        if (currentStatus == null || currentStatus == AccountStatus.ACTIVE) {
+            acc.setStatus(AccountStatus.LOCKED);
+        } else {
+            acc.setStatus(AccountStatus.ACTIVE);
         }
+
+        accountRepository.save(acc);
+    }
+
+    // Trong AdminService.java
+    @Transactional(readOnly = true)
+    public List<CustomerResponse> getCustomersByStaff(Long staffId) {
+        // Chỉ lấy những khách đã đặt tour của Staff này
+        return customerRepository.findCustomersByStaffId(staffId).stream().map(c -> {
+            int points = 0;
+            String level = "SILVER";
+            if (c.getLoyaltyPoint() != null) {
+                points = c.getLoyaltyPoint().getTotalPoints();
+                level = c.getLoyaltyPoint().getLevel().name();
+            }
+            return new CustomerResponse(
+                    c.getCustomerId(),
+                    c.getFullName(),
+                    c.getEmail(),
+                    c.getPhone(),
+                    c.getCustomerType() != null ? c.getCustomerType().name() : "NORMAL",
+                    points,
+                    level,
+                    // Staff vẫn thấy trạng thái nhưng không được sửa
+                    c.getAccount() != null ? c.getAccount().getStatus().name() : "ACTIVE"
+            );
+        }).toList();
     }
 }

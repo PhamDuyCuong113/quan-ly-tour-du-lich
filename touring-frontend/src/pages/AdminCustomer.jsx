@@ -77,7 +77,7 @@ const AdminCustomer = () => {
                         <tr key={c.customerId} className="hover:bg-blue-50/20 transition-colors">
                             <td className="p-8">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg ${c.status === 'LOCKED' ? 'bg-gray-400' : 'bg-blue-600'}`}>
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg ${c.accountStatus === 'LOCKED' ? 'bg-gray-400' : 'bg-blue-600'}`}>
                                         {c.fullName?.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
@@ -98,22 +98,22 @@ const AdminCustomer = () => {
                             </td>
                             <td className="p-8 text-center">
                                     <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                                        c.status === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                        c.accountStatus === 'ACTIVE' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                                     }`}>
-                                        {c.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
+                                        {c.accountStatus === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
                                     </span>
                             </td>
                             <td className="p-8 text-right">
                                 <button
-                                    onClick={() => handleToggleStatus(c.customerId, c.status)}
+                                    onClick={() => handleToggleStatus(c.customerId, c.accountStatus)}
                                     className={`p-3 rounded-xl transition-all ${
-                                        c.status === 'ACTIVE'
+                                        c.accountStatus === 'ACTIVE'
                                             ? 'text-red-400 hover:bg-red-50 hover:text-red-600'
                                             : 'text-green-500 hover:bg-green-50 hover:text-green-700'
                                     }`}
-                                    title={c.status === 'ACTIVE' ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                                    title={c.accountStatus === 'ACTIVE' ? "Khóa tài khoản" : "Mở khóa tài khoản"}
                                 >
-                                    {c.status === 'ACTIVE' ? <ShieldAlert size={24} /> : <BadgeCheck size={24} />}
+                                    {c.accountStatus === 'ACTIVE' ? <ShieldAlert size={24} /> : <BadgeCheck size={24} />}
                                 </button>
                             </td>
                         </tr>
