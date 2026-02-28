@@ -150,28 +150,36 @@ public class AdminService {
         accountRepository.save(acc);
     }
 
-    // Trong AdminService.java
+
     @Transactional(readOnly = true)
     public List<CustomerResponse> getCustomersByStaff(Long staffId) {
-        // Chỉ lấy những khách đã đặt tour của Staff này
-        return customerRepository.findCustomersByStaffId(staffId).stream().map(c -> {
-            int points = 0;
-            String level = "SILVER";
-            if (c.getLoyaltyPoint() != null) {
-                points = c.getLoyaltyPoint().getTotalPoints();
-                level = c.getLoyaltyPoint().getLevel().name();
-            }
-            return new CustomerResponse(
-                    c.getCustomerId(),
-                    c.getFullName(),
-                    c.getEmail(),
-                    c.getPhone(),
-                    c.getCustomerType() != null ? c.getCustomerType().name() : "NORMAL",
-                    points,
-                    level,
-                    // Staff vẫn thấy trạng thái nhưng không được sửa
-                    c.getAccount() != null ? c.getAccount().getStatus().name() : "ACTIVE"
-            );
-        }).toList();
+        return customerRepository.findCustomersByStaffId(staffId)
+                .stream()
+                .map(c -> {
+                    int points = 0;
+                    LoyaltyLevel level = LoyaltyLevel.SILVER;
+
+                    if (c.getLoyaltyPoint() != null) {
+                        points = c.getLoyaltyPoint().getTotalPoints();
+                        level = c.getLoyaltyPoint().getLevel();
+                    }
+
+                    return new CustomerResponse(
+                            c.getCustomerId(),
+                            c.getFullName(),
+                            c.getEmail(),
+                            c.getPhone(),
+                            c.getCustomerType() != null
+                                    ? c.getCustomerType()
+                                    : CustomerType.NORMAL,
+                            points,
+                            level,
+                            // Staff chỉ xem trạng thái, không được sửa
+                            c.getAccount() != null
+                                    ? c.getAccount().getStatus().name()
+                                    : "ACTIVE"
+                    );
+                })
+                .toList();
     }
 }
