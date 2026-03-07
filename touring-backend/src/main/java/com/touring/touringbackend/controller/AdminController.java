@@ -99,4 +99,11 @@ public class AdminController {
         }
         return ResponseEntity.ok(adminService.getCustomersByStaff(user.getStaffId()));
     }
+    @GetMapping("/customers/{id}")
+    public ResponseEntity<?> getCustomerDetail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        return ResponseEntity.ok(adminService.getCustomerDetail(id, user));
+    }
 }
