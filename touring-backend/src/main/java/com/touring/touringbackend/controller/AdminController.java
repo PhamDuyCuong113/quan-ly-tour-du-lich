@@ -33,8 +33,10 @@ public class AdminController {
      * API Thống kê tổng quan (Doanh thu, số đơn, số khách)
      */
     @GetMapping("/stats")
-    public ResponseEntity<AdminStatsResponse> getStats() {
-        return ResponseEntity.ok(adminService.getStats());
+    public ResponseEntity<?> getStats(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        return ResponseEntity.ok(adminService.getStats(user));
     }
 
     /**

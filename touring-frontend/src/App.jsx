@@ -12,6 +12,8 @@ import AdminVoucher from './pages/AdminVoucher';
 import AdminTourDetail from './pages/AdminTourDetail';
 import AdminStaff from "./pages/AdminStaff";
 import AdminCustomer from "./pages/AdminCustomer";
+import CustomerDetail from "./pages/CustomerDetail";
+import AdminDashboard from "./pages/AdminDashboard";
 // Component hiển thị khi gõ sai URL
 const NotFound = () => (
     <div className="flex flex-col items-center justify-center h-[80vh] text-center px-4">
@@ -57,6 +59,7 @@ function App() {
                     }>
                         {/* Mặc định khi vào /admin sẽ hiện trang quản lý tour */}
                         <Route index element={<AdminTour />} />
+                        <Route path="dashboard" element={<AdminDashboard />} />
                         <Route path="tours" element={<AdminTour />} />
                         <Route path="vouchers" element={<AdminVoucher />} />
                         <Route path="tours/:id" element={<AdminTourDetail />} />
@@ -72,6 +75,11 @@ function App() {
                                 <AdminCustomer />
                             </ProtectedRoute>
                         } />
+                        <Route path="customers/:id" element={
+                            <ProtectedRoute allowedRoles={['ADMIN','STAFF']}>
+                                <CustomerDetail />
+                            </ProtectedRoute>
+                        }/>
                     </Route>
 
                     {/* --- TRANG LỖI 404 --- */}

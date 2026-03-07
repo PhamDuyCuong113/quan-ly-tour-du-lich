@@ -289,7 +289,7 @@ public class BookingService {
                 booking.getCustomer().getFullName(),
                 booking.getNumberOfPeople(),
                 booking.getTotalPrice(),
-                booking.getStatus(),
+                booking.getStatus().name(),
                 booking.getBookingDate()
         );
     }

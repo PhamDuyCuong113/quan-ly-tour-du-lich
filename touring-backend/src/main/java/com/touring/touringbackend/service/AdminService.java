@@ -47,6 +47,7 @@ public class AdminService {
             );
         }
 
+
         List<Booking> staffBookings =
                 bookingRepository.findByStaffStaffIdOrderByBookingDateDesc(currentUser.getStaffId());
 
@@ -240,10 +241,12 @@ public class AdminService {
                 c.getFullName(),
                 c.getEmail(),
                 c.getPhone(),
-                c.getCustomerType() != null ? c.getCustomerType().name() : "NORMAL",
+                c.getCustomerType() != null ? c.getCustomerType() : CustomerType.NORMAL,
                 points,
-                level.name(), // Đảm bảo DTO nhận String
-                c.getAccount() != null ? c.getAccount().getStatus().name() : "ACTIVE"
+                level,
+                c.getAccount() != null
+                        ? c.getAccount().getStatus().name()
+                        : AccountStatus.ACTIVE.name()
         );
     }
 
@@ -258,9 +261,10 @@ public class AdminService {
                 b.getBookingId(),
                 tourName, // Lấy từ quan hệ bắc cầu
                 b.getCustomer().getFullName(),
-                b.getNumberOfPeople(), // Đừng quên trường này
+                b.getNumberOfPeople(),
                 b.getTotalPrice(),
-                b.getStatus().name(), // Chuyển Enum sang String
+                b.getStatus().name(),
                 b.getBookingDate()
         );
+    }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import { useNavigate } from 'react-router-dom';
 import {
     Search,
     Mail,
@@ -12,24 +13,30 @@ const AdminCustomer = () => {
     const [customers, setCustomers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-
+    const navigate = useNavigate();
     // Lấy role từ localStorage để phân quyền giao diện
     const role = localStorage.getItem('role');
     const isAdmin = role === 'ADMIN';
 
     const fetchCustomers = async () => {
         setLoading(true);
+
         try {
-            // Admin: tất cả khách | Staff: khách do mình xử lý
-            const res = await api.get('/admin/my-customers');
-            if (Array.isArray(res.data)) {
-                setCustomers(res.data);
-            } else {
-                setCustomers([]);
-            }
+
+            const endpoint =
+                role === "ADMIN"
+                    ? "/admin/customers"
+                    : "/admin/my-customers";
+
+            const res = await api.get(endpoint);
+
+            setCustomers(Array.isArray(res.data) ? res.data : []);
+
         } catch (error) {
+
             console.error("Lỗi lấy danh sách khách hàng:", error);
             setCustomers([]);
+
         } finally {
             setLoading(false);
         }
@@ -77,10 +84,13 @@ const AdminCustomer = () => {
     };
 
     // Lọc theo tìm kiếm
-    const filteredCustomers = customers.filter(c =>
-        (c.fullName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (c.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredCustomers = customers.filter(c => {
+        const name = c.fullName?.toLowerCase() || "";
+        const email = c.email?.toLowerCase() || "";
+        const keyword = searchTerm.toLowerCase();
+
+        return name.includes(keyword) || email.includes(keyword);
+    });
 
     if (loading) {
         return (
@@ -173,7 +183,10 @@ const AdminCustomer = () => {
                                                 : '?'}
                                         </div>
                                         <div>
-                                            <p className="font-black text-gray-800 text-lg">
+                                            <p
+                                                onClick={() => navigate(`/admin/customers/${c.customerId}`)}
+                                                className="font-black text-gray-800 text-lg cursor-pointer hover:text-blue-600"
+                                            >
                                                 {c.fullName}
                                             </p>
                                             <div className="flex items-center gap-2 mt-1">
@@ -244,7 +257,7 @@ const AdminCustomer = () => {
 
             {/* FOOTER */}
             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest italic px-4">
-                Tổng số: {filteredCustomers.length} khách hàng
+                Tổng số: {customers.length} khách hàng
             </p>
         </div>
     );
