@@ -51,7 +51,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/tours/*/itineraries").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET, "/api/promotions/**").hasAnyRole("ADMIN", "STAFF")
-                        .requestMatchers(HttpMethod.POST, "/api/promotions/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/promotions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/promotions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/promotions/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasAnyRole("ADMIN", "STAFF")
 
                         // Customer/Authenticated APIs

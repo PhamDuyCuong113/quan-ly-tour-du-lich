@@ -1,11 +1,14 @@
 package com.touring.touringbackend.service;
 
-import com.touring.touringbackend.dto.admin.AdminStatsResponse;
+import com.touring.touringbackend.dto.admin.*;
+import com.touring.touringbackend.dto.admin.CustomerDetailResponse;
 import com.touring.touringbackend.dto.admin.CustomerResponse;
 import com.touring.touringbackend.dto.admin.StaffResponse;
 import com.touring.touringbackend.dto.auth.RegisterRequest;
+import com.touring.touringbackend.dto.booking.BookingResponse;
 import com.touring.touringbackend.entity.*;
 import com.touring.touringbackend.repository.*;
+import com.touring.touringbackend.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,123 +27,142 @@ public class AdminService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Lấy thống kê doanh thu toàn sàn
+    /*
+     ===============================
+     DASHBOARD STATS
+     ===============================
      */
+
     @Transactional(readOnly = true)
-    public AdminStatsResponse getStats() {
-        BigDecimal revenue = bookingRepository.getTotalRevenue();
-        if (revenue == null) revenue = BigDecimal.ZERO;
+    public AdminStatsResponse getStats(CustomUserDetails currentUser) {
 
-        Long bookings = bookingRepository.countSuccessfulBookings();
-        Long customers = customerRepository.count();
+        if (currentUser.getRole().equals("ADMIN")) {
 
-        return new AdminStatsResponse(revenue, bookings, customers);
+            BigDecimal revenue = bookingRepository.getTotalRevenue();
+
+            return new AdminStatsResponse(
+                    revenue != null ? revenue : BigDecimal.ZERO,
+                    bookingRepository.countSuccessfulBookings(),
+                    customerRepository.count()
+            );
+        }
+
+        List<Booking> staffBookings =
+                bookingRepository.findByStaffStaffIdOrderByBookingDateDesc(currentUser.getStaffId());
+
+        BigDecimal staffRevenue = staffBookings.stream()
+                .filter(b -> b.getStatus() == BookingStatus.CONFIRMED)
+                .map(Booking::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new AdminStatsResponse(
+                staffRevenue,
+                (long) staffBookings.size(),
+                0L
+        );
     }
 
-    /**
-     * Quản lý nhân viên: Lấy danh sách DTO
+    /*
+     ===============================
+     STAFF MANAGEMENT
+     ===============================
      */
+
     @Transactional(readOnly = true)
     public List<StaffResponse> getAllStaffs() {
-        return staffRepository.findAll().stream().map(s -> new StaffResponse(
-                s.getStaffId(),
-                s.getFullName() != null ? s.getFullName() : "N/A",
-                s.getEmail() != null ? s.getEmail() : "Chưa có Email",
-                s.getPhone() != null ? s.getPhone() : "Chưa có SĐT",
-                // Nếu NULL thì mặc định trả về ACTIVE để hiển thị màu xanh
-                s.getAccount() != null ? s.getAccount().getUsername() : "N/A",
-                s.getStatus() != null ? s.getStatus().name() : "ACTIVE"
 
-        )).toList();
+        return staffRepository.findAll()
+                .stream()
+                .map(s -> new StaffResponse(
+                        s.getStaffId(),
+                        s.getFullName() != null ? s.getFullName() : "N/A",
+                        s.getEmail() != null ? s.getEmail() : "Chưa có Email",
+                        s.getPhone() != null ? s.getPhone() : "Chưa có SĐT",
+                        s.getAccount() != null ? s.getAccount().getUsername() : "N/A",
+                        s.getStatus() != null ? s.getStatus().name() : "ACTIVE"
+                ))
+                .toList();
     }
 
-    /**
-     * Quản lý khách hàng: Lấy danh sách DTO kèm trạng thái tài khoản
-     */
-    @Transactional(readOnly = true)
-    public List<CustomerResponse> getAllCustomers() {
-        return customerRepository.findAll().stream().map(c -> {
-            int points = 0;
-            LoyaltyLevel level = LoyaltyLevel.SILVER;
-
-            if (c.getLoyaltyPoint() != null) {
-                points = c.getLoyaltyPoint().getTotalPoints();
-                level = c.getLoyaltyPoint().getLevel();
-            }
-
-            return new CustomerResponse(
-                    c.getCustomerId(),
-                    c.getFullName(),
-                    c.getEmail(),
-                    c.getPhone(),
-                    c.getCustomerType() != null ? c.getCustomerType() : CustomerType.NORMAL,
-                    points,
-                    level, // Ở DTO nếu để String thì dùng .name()
-                    c.getAccount() != null ? c.getAccount().getStatus().name() : "LOCKED"
-            );
-        }).toList();
-    }
-
-    /**
-     * Tạo tài khoản nhân viên mới (Role STAFF)
-     */
     @Transactional
     public String createStaffAccount(RegisterRequest req) {
+
         if (accountRepository.existsByUsername(req.username())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
 
-        // 1. Tạo Account
         Account acc = new Account();
         acc.setUsername(req.username());
         acc.setPasswordHash(passwordEncoder.encode(req.password()));
         acc.setRole(AccountRole.STAFF);
         acc.setStatus(AccountStatus.ACTIVE);
+
         accountRepository.save(acc);
 
-        // 2. Tạo Staff gắn với Account
         Staff staff = new Staff();
         staff.setAccount(acc);
         staff.setFullName(req.fullName());
         staff.setEmail(req.email());
         staff.setPhone(req.phone());
         staff.setStatus(StaffStatus.ACTIVE);
+
         staffRepository.save(staff);
 
         return "Tạo tài khoản nhân viên thành công!";
     }
 
-    /**
-     * Khóa/Mở khóa Nhân viên
-     */
     @Transactional
     public void toggleStaffStatus(Long staffId) {
+
         Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
 
-        StaffStatus newStatus = (staff.getStatus() == StaffStatus.ACTIVE) ? StaffStatus.INACTIVE : StaffStatus.ACTIVE;
+        StaffStatus newStatus =
+                staff.getStatus() == StaffStatus.ACTIVE ? StaffStatus.INACTIVE : StaffStatus.ACTIVE;
+
         staff.setStatus(newStatus);
 
         if (staff.getAccount() != null) {
-            staff.getAccount().setStatus(newStatus == StaffStatus.ACTIVE ? AccountStatus.ACTIVE : AccountStatus.LOCKED);
+
+            staff.getAccount().setStatus(
+                    newStatus == StaffStatus.ACTIVE
+                            ? AccountStatus.ACTIVE
+                            : AccountStatus.LOCKED
+            );
         }
+
         staffRepository.save(staff);
     }
 
-    /**
-     * MỚI: Khóa/Mở khóa Khách hàng (Dành cho nút bấm ở trang Quản lý khách hàng)
+    /*
+     ===============================
+     CUSTOMER MANAGEMENT
+     ===============================
      */
+
+    @Transactional(readOnly = true)
+    public List<CustomerResponse> getAllCustomers() {
+
+        return customerRepository.findAll()
+                .stream()
+                .map(this::mapToCustomerResponse)
+                .toList();
+    }
+
     @Transactional
     public void toggleCustomerStatus(Long customerId) {
+
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
 
         Account acc = customer.getAccount();
-        if (acc == null) throw new RuntimeException("Khách hàng không có tài khoản đăng nhập");
 
-        // Logic an toàn: Nếu status bị NULL thì coi như đang ACTIVE để khóa lại
+        if (acc == null) {
+            throw new RuntimeException("Khách hàng không có tài khoản đăng nhập");
+        }
+
         AccountStatus currentStatus = acc.getStatus();
+
         if (currentStatus == null || currentStatus == AccountStatus.ACTIVE) {
             acc.setStatus(AccountStatus.LOCKED);
         } else {
@@ -150,36 +172,95 @@ public class AdminService {
         accountRepository.save(acc);
     }
 
-
     @Transactional(readOnly = true)
     public List<CustomerResponse> getCustomersByStaff(Long staffId) {
+
         return customerRepository.findCustomersByStaffId(staffId)
                 .stream()
-                .map(c -> {
-                    int points = 0;
-                    LoyaltyLevel level = LoyaltyLevel.SILVER;
-
-                    if (c.getLoyaltyPoint() != null) {
-                        points = c.getLoyaltyPoint().getTotalPoints();
-                        level = c.getLoyaltyPoint().getLevel();
-                    }
-
-                    return new CustomerResponse(
-                            c.getCustomerId(),
-                            c.getFullName(),
-                            c.getEmail(),
-                            c.getPhone(),
-                            c.getCustomerType() != null
-                                    ? c.getCustomerType()
-                                    : CustomerType.NORMAL,
-                            points,
-                            level,
-                            // Staff chỉ xem trạng thái, không được sửa
-                            c.getAccount() != null
-                                    ? c.getAccount().getStatus().name()
-                                    : "ACTIVE"
-                    );
-                })
+                .map(this::mapToCustomerResponse)
                 .toList();
     }
+
+    /*
+     ===============================
+     CUSTOMER DETAIL
+     ===============================
+     */
+
+    @Transactional(readOnly = true)
+    public CustomerDetailResponse getCustomerDetail(Long customerId, CustomUserDetails currentUser) {
+
+        Customer c = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Không thấy khách này"));
+
+        List<Booking> allBookings =
+                bookingRepository.findByCustomerCustomerId(customerId);
+
+        if (currentUser.getRole().equals("STAFF")) {
+
+            allBookings = allBookings.stream()
+                    .filter(b -> b.getStaff() != null
+                            && b.getStaff().getStaffId().equals(currentUser.getStaffId()))
+                    .toList();
+
+            if (allBookings.isEmpty()) {
+                throw new RuntimeException("Bạn không có quyền xem khách này!");
+            }
+        }
+
+        BigDecimal totalSpent = allBookings.stream()
+                .filter(b -> b.getStatus() == BookingStatus.CONFIRMED)
+                .map(Booking::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new CustomerDetailResponse(
+                mapToCustomerResponse(c),
+                allBookings.stream().map(this::mapToBookingResponse).toList(),
+                totalSpent
+        );
+    }
+
+    /*
+     ===============================
+     HELPER MAPPING
+     ===============================
+     */
+
+    private CustomerResponse mapToCustomerResponse(Customer c) {
+        int points = 0;
+        LoyaltyLevel level = LoyaltyLevel.SILVER;
+
+        if (c.getLoyaltyPoint() != null) {
+            points = c.getLoyaltyPoint().getTotalPoints();
+            level = c.getLoyaltyPoint().getLevel();
+        }
+
+        return new CustomerResponse(
+                c.getCustomerId(),
+                c.getFullName(),
+                c.getEmail(),
+                c.getPhone(),
+                c.getCustomerType() != null ? c.getCustomerType().name() : "NORMAL",
+                points,
+                level.name(), // Đảm bảo DTO nhận String
+                c.getAccount() != null ? c.getAccount().getStatus().name() : "ACTIVE"
+        );
+    }
+
+    private BookingResponse mapToBookingResponse(Booking b) {
+        // Lấy tên Tour an toàn thông qua TourSchedule
+        String tourName = "N/A";
+        if (b.getTourSchedule() != null && b.getTourSchedule().getTour() != null) {
+            tourName = b.getTourSchedule().getTour().getTourName();
+        }
+
+        return new BookingResponse(
+                b.getBookingId(),
+                tourName, // Lấy từ quan hệ bắc cầu
+                b.getCustomer().getFullName(),
+                b.getNumberOfPeople(), // Đừng quên trường này
+                b.getTotalPrice(),
+                b.getStatus().name(), // Chuyển Enum sang String
+                b.getBookingDate()
+        );
 }

@@ -26,6 +26,11 @@ public class Booking {
     @JsonIgnore
     private Customer customer;
 
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    @JsonIgnore
+    private Staff staff;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
     @JsonIgnore
@@ -56,5 +61,7 @@ public class Booking {
 
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
     private List<Passenger> passengers;
+
+
 }
 

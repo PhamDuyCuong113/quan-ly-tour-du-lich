@@ -38,10 +38,10 @@ public class Promotion {
     private PromotionStatus status;
 
     @Column(name = "usage_limit")
-    private Integer usageLimit; // Tổng lượt dùng cho phép
+    private Integer usageLimit;
 
     @Column(name = "current_usage")
-    private Integer currentUsage = 0; // Số lượt đã dùng
+    private Integer currentUsage = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id")

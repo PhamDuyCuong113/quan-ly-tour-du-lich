@@ -46,4 +46,26 @@ public class PromotionController {
     public ResponseEntity<List<Promotion>> getAll() {
         return ResponseEntity.ok(promotionRepository.findAllByOrderByPromotionIdDesc());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        promotionRepository.deleteById(id);
+        return ResponseEntity.ok("Đã xóa mã khuyến mãi");
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<String> update(@PathVariable Long id, @Valid @RequestBody PromotionRequest request) {
+        Promotion promo = promotionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mã giảm giá"));
+
+
+        promo.setCode(request.code());
+        promo.setDiscountType(request.discountType());
+        promo.setDiscountValue(request.discountValue());
+        promo.setStartDate(request.startDate());
+        promo.setEndDate(request.endDate());
+        promo.setUsageLimit(request.usageLimit());
+
+        promotionRepository.save(promo);
+        return ResponseEntity.ok("Cập nhật voucher thành công!");
+    }
 }
