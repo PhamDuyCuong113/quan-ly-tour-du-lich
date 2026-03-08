@@ -6,6 +6,7 @@ import com.touring.touringbackend.dto.admin.CustomerResponse;
 import com.touring.touringbackend.dto.admin.StaffResponse;
 import com.touring.touringbackend.dto.auth.RegisterRequest;
 import com.touring.touringbackend.dto.booking.BookingResponse;
+import com.touring.touringbackend.dto.tour.TopTourResponse;
 import com.touring.touringbackend.entity.*;
 import com.touring.touringbackend.repository.*;
 import com.touring.touringbackend.security.CustomUserDetails;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class AdminService {
     private final StaffRepository staffRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final TourRepository tourRepository;
     /*
      ===============================
      DASHBOARD STATS
@@ -266,5 +268,35 @@ public class AdminService {
                 b.getStatus().name(),
                 b.getBookingDate()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopTourResponse> getTopTours() {
+
+        return bookingRepository.findTopTours().stream()
+                .limit(5)
+                .toList();
+    }
+
+    /**
+     * Lấy thống kê trạng thái đơn hàng (cho biểu đồ tròn)
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getBookingStatusStats()  {
+        return List.of(
+                Map.of("status", "Chờ thanh toán", "value", bookingRepository.countByStatus(BookingStatus.PENDING)),
+                Map.of("status", "Thành công", "value", bookingRepository.countByStatus(BookingStatus.CONFIRMED)),
+                Map.of("status", "Đã hủy", "value", bookingRepository.countByStatus(BookingStatus.CANCELLED))
+        );
+    }
+
+    /**
+     * Lấy 5 đơn hàng gần nhất
+     */
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getRecentBookings() {
+        return bookingRepository.findTop5ByOrderByBookingDateDesc().stream()
+                .map(this::mapToBookingResponse)
+                .toList();
     }
 }

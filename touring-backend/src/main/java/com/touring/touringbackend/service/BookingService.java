@@ -293,4 +293,19 @@ public class BookingService {
                 booking.getBookingDate()
         );
     }
+
+    @Transactional
+    public BookingResponse updateBookingStatus(Long bookingId, BookingStatus newStatus) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        // Logic: Nếu chuyển sang CONFIRMED (PAID), tự động trừ số lượng slot nếu chưa trừ
+        if (newStatus == BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.CONFIRMED) {
+            // Logic cộng điểm thưởng tại đây (nếu thanh toán thành công)
+            // notificationService.send(...);
+        }
+
+        booking.setStatus(newStatus);
+        return mapToResponse(bookingRepository.save(booking));
+    }
 }

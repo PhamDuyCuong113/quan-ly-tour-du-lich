@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { ShoppingBag } from "lucide-react";
 import {
     LayoutDashboard,
     Map,
@@ -16,6 +17,7 @@ const AdminLayout = () => {
     const menuItems = [
         { path: '/admin/dashboard', name: 'Dashboard', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'STAFF'] },
         { path: '/admin/tours', name: 'Quản lý Tour', icon: <Map size={20} />, roles: ['ADMIN', 'STAFF'] },
+        { path: '/admin/bookings/manual', name: 'Đặt tại quầy', icon: <ShoppingBag size={20} />, roles: ['ADMIN', 'STAFF'] },
         { path: '/admin/vouchers', name: 'Quản lý Voucher', icon: <TicketPercent size={20} />, roles: ['ADMIN', 'STAFF'] },
         { path: '/admin/customers', name: 'Quản lý Khách hàng', icon: <UserCircle size={20} />, roles: ['ADMIN', 'STAFF'] },
         { path: '/admin/staffs', name: 'Quản lý Nhân viên', icon: <Users size={20} />, roles: ['ADMIN'] },
