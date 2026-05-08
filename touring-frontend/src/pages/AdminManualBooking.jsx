@@ -355,5 +355,4 @@ const AdminManualBooking = () => {
         </div>
     )
 }
-
 export default AdminManualBooking

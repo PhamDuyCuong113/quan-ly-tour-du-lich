@@ -1,5 +1,6 @@
 package com.touring.touringbackend.service;
 
+import com.touring.touringbackend.dto.auth.ChangePasswordRequest;
 import com.touring.touringbackend.dto.auth.LoginRequest;
 import com.touring.touringbackend.dto.auth.RegisterRequest;
 import com.touring.touringbackend.dto.auth.UserResponse;
@@ -7,6 +8,7 @@ import com.touring.touringbackend.entity.*;
 import com.touring.touringbackend.repository.AccountRepository;
 import com.touring.touringbackend.repository.CustomerRepository;
 import com.touring.touringbackend.repository.LoyaltyPointRepository;
+import com.touring.touringbackend.repository.StaffRepository;
 import com.touring.touringbackend.security.CustomUserDetails;
 import com.touring.touringbackend.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class AuthService {
 
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
+    private final StaffRepository staffRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -73,46 +76,90 @@ public class AuthService {
         CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
 
         // 3. Tạo Token
-        return jwtUtil.generateToken(user);
+        return jwtUtil.generateToken(
+                user.getAccountId(),
+                user.getCustomerId(),
+                user.getStaffId(),
+                user.getUsername(),
+                user.getRole()
+        );
     }
 
     private final LoyaltyPointRepository loyaltyPointRepository;
 
     public UserResponse getMyInfo(CustomUserDetails userDetails) {
-        // 1. Lấy Account
         Account acc = accountRepository.findById(userDetails.getAccountId())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
         Customer cust = acc.getCustomer();
+        Staff staff = acc.getStaff();
 
-        // 2. Xử lý cho trường hợp không phải Customer (ví dụ ADMIN)
-        if (cust == null) {
+        if (cust != null) {
+            String customerTypeName = (cust.getCustomerType() != null)
+                    ? cust.getCustomerType().name()
+                    : "NORMAL";
+
+            var loyalty = loyaltyPointRepository.findById(cust.getCustomerId())
+                    .orElse(new LoyaltyPoint(cust.getCustomerId(), cust, 0, LoyaltyLevel.SILVER));
+
             return new UserResponse(
                     acc.getAccountId(),
                     acc.getUsername(),
-                    "Administrator", // Tên mặc định cho Admin
-                    null, null,
+                    cust.getFullName(),
+                    cust.getEmail(),
+                    cust.getPhone(),
                     acc.getRole().name(),
-                    null, 0, LoyaltyLevel.SILVER
+                    customerTypeName,
+                    loyalty.getTotalPoints(),
+                    loyalty.getLevel()
             );
         }
-        String customerTypeName = (cust.getCustomerType() != null)
-                ? cust.getCustomerType().name()
-                : "NORMAL";
 
-        var loyalty = loyaltyPointRepository.findById(cust.getCustomerId())
-                .orElse(new LoyaltyPoint(cust.getCustomerId(), cust, 0, LoyaltyLevel.SILVER));
+        if (staff != null) {
+            return new UserResponse(
+                    acc.getAccountId(),
+                    acc.getUsername(),
+                    staff.getFullName(),
+                    staff.getEmail(),
+                    staff.getPhone(),
+                    acc.getRole().name(),
+                    null,
+                    0,
+                    LoyaltyLevel.SILVER
+            );
+        }
 
         return new UserResponse(
                 acc.getAccountId(),
                 acc.getUsername(),
-                cust.getFullName(),
-                cust.getEmail(),
-                cust.getPhone(),
+                acc.getUsername(),
+                null,
+                null,
                 acc.getRole().name(),
-                customerTypeName, // DÙNG BIẾN NÀY thay vì gọi trực tiếp cust.getCustomerType().name()
-                loyalty.getTotalPoints(),
-                loyalty.getLevel()
+                null,
+                0,
+                LoyaltyLevel.SILVER
         );
+    }
+
+    @Transactional
+    public void changePassword(CustomUserDetails userDetails, ChangePasswordRequest request) {
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new RuntimeException("Mật khẩu mới và xác nhận mật khẩu không khớp!");
+        }
+
+        Account acc = accountRepository.findById(userDetails.getAccountId())
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), acc.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng!");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), acc.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu mới phải khác mật khẩu hiện tại!");
+        }
+
+        acc.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        accountRepository.save(acc);
     }
 }

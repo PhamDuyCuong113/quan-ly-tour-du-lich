@@ -14,9 +14,16 @@ public record TourDetailResponse(
         String tourType,
         Double averageRating,
         Long totalReviews,
+        List<ImageDTO> images,
         List<ScheduleDTO> schedules,
         List<ItineraryDTO> itineraries
 ) {
+    public record ImageDTO(
+            Long imageId,
+            String imageUrl,
+            String publicId,
+            String caption
+    ) {}
     public record ScheduleDTO(
             Long scheduleId,
             LocalDate departureDate,

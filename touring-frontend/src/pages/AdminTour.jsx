@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import {
     Plus, Calendar, FileDown, X, TrendingUp,
-    ShoppingBag, Users, Search, Filter, Trash2
+    ShoppingBag, Users, Search, Filter, Trash2,
+    Pencil, Lock, Unlock
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { formatThumbnailUrl } from '../utils/cloudinaryHelper';
 
 const AdminTour = () => {
     const navigate = useNavigate();
@@ -44,7 +46,7 @@ const AdminTour = () => {
         try {
             // Sử dụng API management để Backend tự lọc theo Staff hoặc hiện tất cả cho Admin
             const [tourRes, statsRes] = await Promise.all([
-                api.get('/tours/management/search'),
+                api.get('/tours/management/search', { params: { sortBy: 'newest' } }),
                 api.get('/admin/stats')
             ]);
             setTours(tourRes.data);
@@ -89,7 +91,9 @@ const AdminTour = () => {
             if (selectedFile) {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
-                await api.post(`/tours/${tourRes.data.tourId}/upload`, formData);
+                await api.post(`/tours/${tourRes.data.tourId}/images`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             }
             alert("Tạo Tour thành công!");
             setShowTourModal(false);
@@ -97,13 +101,14 @@ const AdminTour = () => {
         } catch (error) { alert("Lỗi tạo tour. Kiểm tra lại dữ liệu."); }
     };
 
-    const handleDeleteTour = async (id, name) => {
-        if (window.confirm(`Xóa tour: "${name}"?`)) {
+    const handleToggleStatus = async (tour) => {
+        const nextStatus = tour.status === 'OPEN' ? 'LOCK' : 'OPEN';
+        if (window.confirm(`Chuyen trang thai tour "${tour.tourName}" sang ${nextStatus}?`)) {
             try {
-                await api.delete(`/tours/${id}`);
-                alert("Xóa thành công!");
+                await api.delete(`/tours/${tour.tourId}`);
+                alert(`Da chuyen trang thai sang ${nextStatus}!`);
                 fetchData();
-            } catch (error) { alert("Bạn không có quyền xóa tour này!"); }
+            } catch (error) { alert("Ban khong co quyen thay doi trang thai tour nay!"); }
         }
     };
 
@@ -177,33 +182,55 @@ const AdminTour = () => {
                 <table className="w-full text-left">
                     <thead className="bg-gray-50/50 border-b">
                     <tr>
-                        <th className="p-8 font-black text-gray-400 text-[10px] uppercase">Thông tin Tour</th>
-                        {role === 'ADMIN' && <th className="p-8 font-black text-gray-400 text-[10px] uppercase">Người đăng</th>}
-                        <th className="p-8 font-black text-gray-400 text-[10px] uppercase text-center">Quản trị</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">STT</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">Mã Tour</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">Tên Tour</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">Địa điểm đi - đến</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">Người tạo</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">Ngày tạo</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase">Trạng thái</th>
+                        <th className="p-6 font-black text-gray-400 text-[10px] uppercase text-center">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                    {tours.map(t => (
+                    {tours.map((t, index) => (
                         <tr key={t.tourId} className="hover:bg-blue-50/20 transition-all duration-300 group">
-                            <td className="p-8">
-                                <div className="flex items-center gap-6 cursor-pointer" onClick={() => navigate(`/admin/tours/${t.tourId}`)}>
-                                    <img src={t.imageUrl || 'https://placehold.co/200x200?text=Tour'} className="w-20 h-20 rounded-3xl object-cover group-hover:scale-110 transition-all" />
-                                    <div>
-                                        <p className="font-black text-gray-800 text-xl leading-tight">{t.tourName}</p>
-                                        <p className="text-xs font-bold text-blue-500 uppercase mt-1">{t.tourCode} • {t.destination}</p>
-                                    </div>
+                            <td className="p-6 font-black text-gray-500">{index + 1}</td>
+                            <td className="p-6">
+                                <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-xl">
+                                    {t.tourCode}
+                                </span>
+                            </td>
+                            <td className="p-6">
+                                <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/admin/tours/${t.tourId}`)}>
+                                    <img src={formatThumbnailUrl(t.imageUrl || 'https://placehold.co/200x200?text=Tour')} className="w-14 h-14 rounded-2xl object-cover group-hover:scale-110 transition-all" />
+                                    <p className="font-black text-gray-800 leading-tight">{t.tourName}</p>
                                 </div>
                             </td>
-                            {role === 'ADMIN' && (
-                                <td className="p-8">
-                                    <span className="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600">{t.staffName}</span>
-                                </td>
-                            )}
-                            <td className="p-8 text-center">
+                            <td className="p-6 text-sm font-bold text-gray-700">{t.destination || '-'}</td>
+                            <td className="p-6">
+                                <span className="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600">
+                                    {t.staffName || 'He thong'}
+                                </span>
+                            </td>
+                            <td className="p-6 text-sm font-bold text-gray-600">
+                                {t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN') : '-'}
+                            </td>
+                            <td className="p-6">
+                                <span className={`px-3 py-1 rounded-lg text-xs font-black ${
+                                    t.status === 'OPEN' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                                }`}>
+                                    {t.status === 'OPEN' ? 'OPEN' : 'LOCK'}
+                                </span>
+                            </td>
+                            <td className="p-6 text-center">
                                 <div className="flex justify-center gap-3">
+                                    <button onClick={() => navigate(`/admin/tours/${t.tourId}`)} className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"><Pencil size={20} /></button>
                                     <button onClick={() => { setSelectedTour(t); setShowScheduleModal(true); }} className="p-3 bg-orange-50 text-orange-600 rounded-2xl hover:bg-orange-600 hover:text-white transition-all shadow-sm"><Calendar size={20} /></button>
                                     <button onClick={() => handleExportExcel(t)} className="p-3 bg-green-50 text-green-600 rounded-2xl hover:bg-green-600 hover:text-white transition-all shadow-sm"><FileDown size={20} /></button>
-                                    <button onClick={() => handleDeleteTour(t.tourId, t.tourName)} className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"><Trash2 size={20} /></button>
+                                    <button onClick={() => handleToggleStatus(t)} className="p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-800 hover:text-white transition-all shadow-sm">
+                                        {t.status === 'OPEN' ? <Lock size={20} /> : <Unlock size={20} />}
+                                    </button>
                                 </div>
                             </td>
                         </tr>

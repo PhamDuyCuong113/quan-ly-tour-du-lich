@@ -45,3 +45,8 @@ spring:
 upload:
   path: G:/project2/touring-backend/uploads/
 
+cloudinary:
+  cloud_name: djunoakqr
+  api_key: 358853678444335
+  api_secret: Hc7JVAsmTjH1GYGAbDeagPwPgJM
+

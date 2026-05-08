@@ -49,4 +49,24 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             @Param("endDate") LocalDate endDate,
             @Param("staffId") Long staffId // Nếu truyền null -> Admin (xem hết), nếu có ID -> Staff (xem của mình)
     );
+
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN t.schedules s " +
+            "WHERE (:keyword IS NULL OR " +
+            "      LOWER(t.destination) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "      LOWER(t.tourName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:minPrice IS NULL OR t.basePrice >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR t.basePrice <= :maxPrice) " +
+            "AND (:startDate IS NULL OR s.departureDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.departureDate <= :endDate) " +
+            "AND (:staffId IS NULL OR t.staff.id = :staffId) " +
+            "AND (:includeDeleted = true OR t.isDeleted = false)")
+    List<Tour> advancedSearchForManagement(
+            @Param("keyword") String keyword,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("staffId") Long staffId,
+            @Param("includeDeleted") boolean includeDeleted
+    );
 }

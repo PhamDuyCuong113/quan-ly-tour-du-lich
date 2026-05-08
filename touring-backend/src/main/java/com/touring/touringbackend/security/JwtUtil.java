@@ -23,14 +23,14 @@ public class JwtUtil {
         );
     }
 
-    public String generateToken(CustomUserDetails user) {
+    public String generateToken(Long accountId, Long customerId, Long staffId, String username, String role) {
 
         return Jwts.builder()
-                .setSubject(user.getUsername())
-                .claim("accountId", user.getAccountId())
-                .claim("customerId", user.getCustomerId())
-                .claim("staffId", user.getStaffId())
-                .claim("role", user.getRole())
+                .setSubject(username)
+                .claim("accountId", accountId)
+                .claim("customerId", customerId)
+                .claim("staffId", staffId)
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(getSigningKey())
@@ -61,6 +61,10 @@ public class JwtUtil {
 
     public Long extractCustomerId(String token) {
         return extractClaims(token).get("customerId", Long.class);
+    }
+
+    public Long extractStaffId(String token) {
+        return extractClaims(token).get("staffId", Long.class);
     }
 
     public String extractRole(String token) {

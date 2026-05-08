@@ -1,5 +1,6 @@
 package com.touring.touringbackend.controller;
 
+import com.touring.touringbackend.dto.auth.ChangePasswordRequest;
 import com.touring.touringbackend.dto.auth.LoginRequest;
 import com.touring.touringbackend.dto.auth.LoginResponse;
 import com.touring.touringbackend.dto.auth.RegisterRequest;
@@ -43,7 +44,13 @@ public class AuthController {
                 (CustomUserDetails) authentication.getPrincipal();
 
         // 3️⃣ Tạo token
-        String token = jwtUtil.generateToken(user);
+        String token = jwtUtil.generateToken(
+            user.getAccountId(),
+            user.getCustomerId(),
+            user.getStaffId(),
+            user.getUsername(),
+            user.getRole()
+        );
 
         // 4️⃣ Trả token
         return new LoginResponse(token);
@@ -60,5 +67,16 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(authService.getMyInfo(userDetails));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        authService.changePassword(userDetails, request);
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
     }
 }

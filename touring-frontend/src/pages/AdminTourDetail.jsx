@@ -93,9 +93,7 @@ const AdminTourDetail = () => {
         try {
             setLoading(true);
             // Gọi API với mảng files
-            await api.post(`/tours/${id}/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await api.post(`/tours/${id}/upload`, formData);
             alert(`Đã tải lên ${files.length} ảnh thành công!`);
             fetchDetail(); // Load lại để hiện ảnh mới
         } catch (error) {

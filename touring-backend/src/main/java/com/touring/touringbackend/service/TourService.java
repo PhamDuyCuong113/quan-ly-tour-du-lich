@@ -12,16 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +30,7 @@ public class TourService {
     private final ItineraryRepository itineraryRepository;
     private final StaffRepository staffRepository;
     private final PassengerRepository passengerRepository; // ĐÃ BỔ SUNG Ở ĐÂY
+    private final CloudinaryService cloudinaryService;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -75,6 +71,16 @@ public class TourService {
                         it.getItineraryId(), it.getDayNumber(), it.getTitle(), it.getDescription()
                 )).toList();
 
+        List<TourDetailResponse.ImageDTO> imageDTOs = (tour.getImages() == null) ? List.of()
+            : tour.getImages().stream()
+            .map(img -> new TourDetailResponse.ImageDTO(
+                img.getImageId(),
+                img.getImageUrl(),
+                img.getPublicId(),
+                img.getCaption()
+            ))
+            .toList();
+
         return new TourDetailResponse(
                 tour.getTourId(),
                 tour.getTourCode() != null ? tour.getTourCode() : "N/A", // Check null
@@ -85,6 +91,7 @@ public class TourService {
                 tour.getTourType() != null ? tour.getTourType().name() : "DOMESTIC", // Check null
                 avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0,
                 totalReviews != null ? totalReviews : 0L,
+            imageDTOs,
                 scheduleDTOs,
                 itineraryDTOs
         );
@@ -113,8 +120,16 @@ public class TourService {
     public List<TourResponse> searchToursForManagement(String keyword, BigDecimal minPrice, BigDecimal maxPrice,
                                                        LocalDate startDate, LocalDate endDate, String sortBy,
                                                        CustomUserDetails currentUser) {
-        Long searchStaffId = currentUser.getRole().equals("STAFF") ? currentUser.getStaffId() : null;
-        List<Tour> tours = tourRepository.advancedSearch(keyword, minPrice, maxPrice, startDate, endDate, searchStaffId);
+        boolean includeDeleted = true; // Admin/Staff đều xem toàn bộ tour
+        List<Tour> tours = tourRepository.advancedSearchForManagement(
+                keyword,
+                minPrice,
+                maxPrice,
+                startDate,
+                endDate,
+                null,
+                includeDeleted
+        );
         sortTours(tours, sortBy);
         return tours.stream().map(this::mapToTourResponse).toList();
     }
@@ -160,7 +175,10 @@ public class TourService {
     public void deleteTour(Long id, CustomUserDetails currentUser) {
         Tour tour = tourRepository.findById(id).orElseThrow();
         checkOwnership(tour, currentUser);
-        tour.setDeleted(true);
+
+        boolean nextDeleted = !tour.isDeleted();
+        tour.setDeleted(nextDeleted);
+        tour.setStatus(nextDeleted ? TourStatus.CLOSED : TourStatus.OPEN);
         tourRepository.save(tour);
     }
 
@@ -238,26 +256,19 @@ public class TourService {
 
         checkOwnership(tour, currentUser); // Kiểm tra quyền chủ tour
 
-        try {
-            File directory = new File(uploadPath);
-            if (!directory.exists()) directory.mkdirs();
-
-            for (MultipartFile file : files) {
-                // 1. Tạo tên file duy nhất cho từng ảnh
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                Path filePath = Paths.get(uploadPath, fileName);
-
-                // 2. Lưu file vật lý vào laptop
-                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // 3. Lưu vào Database
-                TourImage tourImage = new TourImage();
-                tourImage.setTour(tour);
-                tourImage.setImageUrl("http://localhost:8080/uploads/" + fileName);
-                tourImageRepository.save(tourImage);
+        for (MultipartFile file : files) {
+            Map<String, Object> uploadResult = cloudinaryService.uploadImage(file, tourId);
+            String imageUrl = (String) uploadResult.get("secure_url");
+            String publicId = (String) uploadResult.get("public_id");
+            if (imageUrl == null || publicId == null) {
+                throw new RuntimeException("Lỗi khi upload ảnh: thiếu URL hoặc public_id");
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi lưu file: " + e.getMessage());
+
+            TourImage tourImage = new TourImage();
+            tourImage.setTour(tour);
+            tourImage.setImageUrl(imageUrl);
+            tourImage.setPublicId(publicId);
+            tourImageRepository.save(tourImage);
         }
     }
 
@@ -265,6 +276,9 @@ public class TourService {
     public void deleteTourImage(Long imageId, CustomUserDetails currentUser) {
         TourImage img = tourImageRepository.findById(imageId).orElseThrow();
         checkOwnership(img.getTour(), currentUser);
+        if (img.getPublicId() != null) {
+            cloudinaryService.deleteImage(img.getPublicId());
+        }
         tourImageRepository.delete(img);
     }
 
@@ -293,11 +307,16 @@ public class TourService {
     }
 
     private void sortTours(List<Tour> tours, String sortBy) {
-        if (sortBy == null) return;
-        switch (sortBy) {
+        String normalizedSort = (sortBy == null || sortBy.isBlank()) ? "newest" : sortBy;
+        switch (normalizedSort) {
             case "price_asc" -> tours.sort(Comparator.comparing(Tour::getBasePrice));
             case "price_desc" -> tours.sort((t1, t2) -> t2.getBasePrice().compareTo(t1.getBasePrice()));
-            default -> tours.sort((t1, t2) -> t2.getTourId().compareTo(t1.getTourId()));
+            default -> tours.sort((t1, t2) -> {
+                if (t1.getCreatedAt() == null && t2.getCreatedAt() == null) return t2.getTourId().compareTo(t1.getTourId());
+                if (t1.getCreatedAt() == null) return 1;
+                if (t2.getCreatedAt() == null) return -1;
+                return t2.getCreatedAt().compareTo(t1.getCreatedAt());
+            });
         }
     }
 
@@ -306,13 +325,16 @@ public class TourService {
         Long totalReviews = reviewRepository.countReviews(t.getTourId(), ReviewStatus.VISIBLE);
         String firstImageUrl = (t.getImages() != null && !t.getImages().isEmpty()) ? t.getImages().get(0).getImageUrl() : null;
         String staffName = (t.getStaff() != null) ? t.getStaff().getFullName() : "Hệ thống";
+        String status = t.isDeleted() ? TourStatus.CLOSED.name() : TourStatus.OPEN.name();
 
         return new TourResponse(
                 t.getTourId(), t.getTourCode(), t.getTourName(), t.getDestination(),
                 t.getBasePrice(), t.getDurationDays(), firstImageUrl,
                 avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0,
                 totalReviews != null ? totalReviews : 0L,
-                staffName
+                staffName,
+                t.getCreatedAt(),
+                status
         );
     }
 }

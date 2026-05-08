@@ -1,6 +1,7 @@
 package com.touring.touringbackend.dto.tour;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record TourResponse(
         Long tourId,
@@ -12,5 +13,7 @@ public record TourResponse(
         String imageUrl,
         Double averageRating,
         Long totalReviews,
-        String staffName
+        String staffName,
+        LocalDateTime createdAt,
+        String status
 ) {}

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import {
     Calendar, Users, Star, MapPin, Tag,
-    CheckCircle2, ChevronDown, Clock, Map, Info
+    CheckCircle2, ChevronDown, Clock, Map, Info, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { formatMainImageUrl, formatThumbnailUrl } from '../utils/cloudinaryHelper';
 
 const TourDetail = () => {
     const { id } = useParams();
@@ -18,6 +19,7 @@ const TourDetail = () => {
     const [relatedTours, setRelatedTours] = useState([]);
     const [promoCode, setPromoCode] = useState('');
     const [loading, setLoading] = useState(true);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     // --- 2. GỌI API ĐỒNG BỘ ---
     useEffect(() => {
@@ -33,6 +35,8 @@ const TourDetail = () => {
                 setTour(tourRes.data);
                 setReviews(reviewRes.data);
                 setRelatedTours(relatedRes.data);
+
+                setActiveImageIndex(0);
 
                 // Cuộn lên đầu trang mỗi khi đổi tour
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -63,6 +67,28 @@ const TourDetail = () => {
             alert(error.response?.data?.message || "Đặt tour thất bại!");
             if (error.response?.status === 401) navigate('/login');
         }
+    };
+
+    const imageList = useMemo(() => {
+        const imgs = (tour?.images || [])
+            .map((img) => img.imageUrl)
+            .filter(Boolean);
+        return imgs.length > 0
+            ? imgs
+            : (tour?.imageUrl ? [tour.imageUrl] : []);
+    }, [tour]);
+
+    const hasImages = imageList.length > 0;
+    const activeImage = hasImages ? imageList[Math.min(activeImageIndex, imageList.length - 1)] : null;
+
+    const goPrevImage = () => {
+        if (imageList.length < 2) return;
+        setActiveImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
+    };
+
+    const goNextImage = () => {
+        if (imageList.length < 2) return;
+        setActiveImageIndex((prev) => (prev + 1) % imageList.length);
     };
 
     if (loading) return (
@@ -101,13 +127,62 @@ const TourDetail = () => {
                     </div>
 
                     {/* Ảnh chính của Tour */}
-                    <div className="rounded-[3.5rem] overflow-hidden shadow-2xl mb-12 h-[550px] border-8 border-white bg-gray-100">
-                        <img
-                            src={tour.imageUrl || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1000'}
-                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                            alt={tour.tourName}
-                        />
+                    <div className="rounded-[3.5rem] overflow-hidden shadow-2xl mb-6 h-[550px] border-8 border-white bg-gray-100 relative">
+                        {activeImage ? (
+                            <img
+                                src={formatMainImageUrl(activeImage)}
+                                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                alt={tour.tourName}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">
+                                Chưa có ảnh
+                            </div>
+                        )}
+
+                        {imageList.length > 1 && (
+                            <>
+                                <button
+                                    onClick={goPrevImage}
+                                    className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 text-gray-700 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+                                    aria-label="Ảnh trước"
+                                >
+                                    <ChevronLeft size={28} />
+                                </button>
+                                <button
+                                    onClick={goNextImage}
+                                    className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 text-gray-700 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+                                    aria-label="Ảnh sau"
+                                >
+                                    <ChevronRight size={28} />
+                                </button>
+                            </>
+                        )}
                     </div>
+
+                    {/* Thumbnails */}
+                    {imageList.length > 1 && (
+                        <div className="grid grid-cols-4 md:grid-cols-6 gap-4 mb-12">
+                            {imageList.map((img, idx) => (
+                                <button
+                                    key={`${img}-${idx}`}
+                                    onClick={() => setActiveImageIndex(idx)}
+                                    className={`rounded-2xl overflow-hidden border-4 transition-all ${
+                                        idx === activeImageIndex
+                                            ? 'border-blue-600 shadow-lg'
+                                            : 'border-white hover:border-blue-200'
+                                    }`}
+                                    aria-label={`Ảnh ${idx + 1}`}
+                                >
+                                    <img
+                                        src={formatThumbnailUrl(img)}
+                                        className="w-full h-20 object-cover"
+                                        alt={`${tour.tourName} ${idx + 1}`}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Giới thiệu tổng quan */}
                     <div className="mb-16">

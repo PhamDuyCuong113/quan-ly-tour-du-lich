@@ -28,4 +28,7 @@ public class TourImage {
 
     @Column(columnDefinition = "TEXT")
     private String caption;
+
+    @Column(name = "public_id")
+    private String publicId;
 }

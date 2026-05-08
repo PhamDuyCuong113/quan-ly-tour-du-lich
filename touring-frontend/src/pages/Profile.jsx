@@ -1,55 +1,193 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { Award, Mail, Phone, MapPin, Star } from 'lucide-react';
+import { User, Mail, Phone, Shield, Eye, EyeOff, Save, LogOut, Calendar } from 'lucide-react';
 
 const Profile = () => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        api.get('/auth/me').then(res => setUser(res.data));
+        const fetchProfile = async () => {
+            try {
+                const res = await api.get('/auth/me');
+                setUser(res.data);
+            } catch (error) {
+                console.error('Cannot load profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfile();
     }, []);
 
-    if (!user) return null;
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            alert('Mật khẩu mới và xác nhận mật khẩu không khớp!');
+            return;
+        }
+
+        setSaving(true);
+        try {
+            await api.post('/auth/change-password', passwordForm);
+            alert('Đổi mật khẩu thành công!');
+            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            alert(error.response?.data?.message || 'Đổi mật khẩu thất bại!');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        window.location.href = '/login';
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-14 h-14 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+                    <p className="mt-4 font-black text-gray-500 uppercase tracking-widest">Đang tải profile...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) return <div className="p-10 text-center text-gray-500">Không tải được thông tin tài khoản.</div>;
 
     return (
-        <div className="container mx-auto p-6 max-w-2xl">
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                <div className="bg-blue-600 h-32 flex items-end justify-center pb-4">
-                    <div className="bg-white p-2 rounded-full shadow-lg translate-y-12">
-                        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center">
-                            <User className="w-12 h-12 text-blue-600" />
-                        </div>
-                    </div>
+        <div className="container mx-auto p-4 md:p-6 max-w-5xl">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
+                <div className="h-40 bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 relative">
+                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, white 0, transparent 18%), radial-gradient(circle at 80% 10%, white 0, transparent 14%)' }} />
                 </div>
 
-                <div className="pt-16 pb-8 px-8 text-center">
-                    <h2 className="text-3xl font-bold text-gray-800">{user.fullName}</h2>
-                    <span className="inline-block bg-blue-100 text-blue-600 px-4 py-1 rounded-full text-sm font-bold mt-2">
-                        {user.role}
-                    </span>
-
-                    <div className="grid grid-cols-2 gap-4 mt-8">
-                        <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
-                            <Award className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                            <p className="text-gray-500 text-sm">Hạng thành viên</p>
-                            <p className="text-xl font-bold text-orange-700">{user.level}</p>
+                <div className="px-6 md:px-10 pb-10 -mt-16">
+                    <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl border border-gray-100">
+                        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                            <div className="flex items-start gap-5">
+                                <div className="w-24 h-24 md:w-28 md:h-28 rounded-[2rem] bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center text-white shadow-xl">
+                                    <User className="w-12 h-12" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">{user.fullName || user.username}</h1>
+                                    <p className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-black uppercase tracking-widest">
+                                        <Shield size={14} /> {user.role}
+                                    </p>
+                                    <p className="mt-4 text-sm text-gray-500">
+                                        Tài khoản: <span className="font-bold text-gray-700">{user.username}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={handleLogout} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-900 text-white font-black hover:bg-red-600 transition-all">
+                                <LogOut size={18} /> Đăng xuất
+                            </button>
                         </div>
-                        <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                            <Star className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                            <p className="text-gray-500 text-sm">Điểm tích lũy</p>
-                            <p className="text-xl font-bold text-blue-700">{user.totalPoints} pts</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                            <Stat label="Role" value={user.role || '-'} />
+                            <Stat label="Loại" value={user.customerType || 'N/A'} />
+                            <Stat label="Điểm tích lũy" value={`${user.totalPoints ?? 0} pts`} />
                         </div>
                     </div>
 
-                    <div className="mt-8 text-left space-y-4 text-gray-600 border-t pt-6">
-                        <div className="flex items-center gap-3"><Mail className="w-5 h-5"/> {user.email || 'Chưa cập nhật'}</div>
-                        <div className="flex items-center gap-3"><Phone className="w-5 h-5"/> {user.phone || 'Chưa cập nhật'}</div>
-                        <div className="flex items-center gap-3"><MapPin className="w-5 h-5"/> {user.address || 'Hà Nội, Việt Nam'}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
+                            <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-5">Thông tin cơ bản</h2>
+                            <div className="space-y-4 text-gray-700">
+                                <InfoRow icon={<User size={18} />} label="Họ tên" value={user.fullName || '-'} />
+                                <InfoRow icon={<Mail size={18} />} label="Email" value={user.email || '-'} />
+                                <InfoRow icon={<Phone size={18} />} label="Số điện thoại" value={user.phone || '-'} />
+                                <InfoRow icon={<Calendar size={18} />} label="Loại khách hàng" value={user.customerType || '-'} />
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
+                            <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter mb-5">Đổi mật khẩu</h2>
+                            <form className="space-y-4" onSubmit={handleChangePassword}>
+                                <PasswordField
+                                    label="Mật khẩu hiện tại"
+                                    value={passwordForm.currentPassword}
+                                    onChange={(value) => setPasswordForm({ ...passwordForm, currentPassword: value })}
+                                    show={showPassword}
+                                    onToggle={() => setShowPassword(!showPassword)}
+                                />
+                                <PasswordField
+                                    label="Mật khẩu mới"
+                                    value={passwordForm.newPassword}
+                                    onChange={(value) => setPasswordForm({ ...passwordForm, newPassword: value })}
+                                    show={showPassword}
+                                    onToggle={() => setShowPassword(!showPassword)}
+                                />
+                                <PasswordField
+                                    label="Xác nhận mật khẩu mới"
+                                    value={passwordForm.confirmPassword}
+                                    onChange={(value) => setPasswordForm({ ...passwordForm, confirmPassword: value })}
+                                    show={showPassword}
+                                    onToggle={() => setShowPassword(!showPassword)}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 transition-all disabled:opacity-60"
+                                >
+                                    <Save size={18} /> {saving ? 'Đang lưu...' : 'Lưu mật khẩu mới'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+const Stat = ({ label, value }) => (
+    <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label}</p>
+        <p className="mt-2 text-lg font-black text-gray-900">{value}</p>
+    </div>
+);
+
+const InfoRow = ({ icon, label, value }) => (
+    <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+        <div className="flex items-center gap-3 text-gray-500 font-bold">
+            {icon}
+            <span>{label}</span>
+        </div>
+        <span className="font-black text-gray-900 text-right">{value}</span>
+    </div>
+);
+
+const PasswordField = ({ label, value, onChange, show, onToggle }) => (
+    <div>
+        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2 mb-2">{label}</label>
+        <div className="relative">
+            <input
+                type={show ? 'text' : 'password'}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-200"
+            />
+            <button
+                type="button"
+                onClick={onToggle}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+            >
+                {show ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+        </div>
+    </div>
+);
 
 export default Profile;

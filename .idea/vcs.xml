@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$/../GIT/unihub-thuc-tap-co-so" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tour-management-thuc-tap-co-so" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/touring-backend" vcs="Git" />
   </component>
 </project>

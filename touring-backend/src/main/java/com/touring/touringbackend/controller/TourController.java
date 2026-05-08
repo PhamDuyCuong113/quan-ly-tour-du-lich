@@ -7,12 +7,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -112,11 +114,25 @@ public class TourController {
     @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadImages(
             @PathVariable Long id,
-            @RequestPart("files") MultipartFile[] files, // Đổi từ file -> files và thêm mảng []
+            @RequestParam(value = "files", required = false) MultipartFile[] files,
+            @RequestParam(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
+        List<MultipartFile> uploads = new ArrayList<>();
+        if (files != null) {
+            for (MultipartFile f : files) {
+                if (f != null && !f.isEmpty()) uploads.add(f);
+            }
+        }
+        if (file != null && !file.isEmpty()) {
+            uploads.add(file);
+        }
+        if (uploads.isEmpty()) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Không có file để upload");
+        }
 
-        tourService.uploadTourImages(id, files, currentUser);
-        return ResponseEntity.ok("Đã tải lên thành công " + files.length + " ảnh.");
+        MultipartFile[] uploadArray = uploads.toArray(new MultipartFile[0]);
+        tourService.uploadTourImages(id, uploadArray, currentUser);
+        return ResponseEntity.ok("Đã tải lên thành công " + uploadArray.length + " ảnh.");
     }
 
     /**
