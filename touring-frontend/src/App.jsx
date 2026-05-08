@@ -1,20 +1,22 @@
+import { Suspense, lazy } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import TourDetail from './pages/TourDetail';
-import MyBookings from './pages/MyBookings';
-import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminLayout from './components/AdminLayout';
-import AdminTour from './pages/AdminTour';
-import AdminVoucher from './pages/AdminVoucher';
-import AdminTourDetail from './pages/AdminTourDetail';
-import AdminStaff from "./pages/AdminStaff";
-import AdminCustomer from "./pages/AdminCustomer";
-import CustomerDetail from "./pages/CustomerDetail";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminManualBooking from "./pages/AdminManualBooking.jsx";
+
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const TourDetail = lazy(() => import('./pages/TourDetail'));
+const MyBookings = lazy(() => import('./pages/MyBookings'));
+const Profile = lazy(() => import('./pages/Profile'));
+const AdminLayout = lazy(() => import('./components/AdminLayout'));
+const AdminTour = lazy(() => import('./pages/AdminTour'));
+const AdminVoucher = lazy(() => import('./pages/AdminVoucher'));
+const AdminTourDetail = lazy(() => import('./pages/AdminTourDetail'));
+const AdminStaff = lazy(() => import('./pages/AdminStaff'));
+const AdminCustomer = lazy(() => import('./pages/AdminCustomer'));
+const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminManualBooking = lazy(() => import('./pages/AdminManualBooking.jsx'));
 
 // Component hiển thị khi gõ sai URL
 const NotFound = () => (
@@ -35,6 +37,7 @@ function App() {
             <Navbar />
 
             <main>
+                <Suspense fallback={<div className="flex items-center justify-center py-24 text-gray-400 font-bold">Đang tải...</div>}>
                 <Routes>
                     {/* --- CÁC TRANG CÔNG KHAI (AI CŨNG XEM ĐƯỢC) --- */}
                     <Route path="/" element={<Home />} />
@@ -89,6 +92,7 @@ function App() {
                     {/* --- TRANG LỖI 404 --- */}
                     <Route path="*" element={<NotFound />} />
                 </Routes>
+                </Suspense>
             </main>
 
             {/* Footer đồng bộ cho toàn trang */}
