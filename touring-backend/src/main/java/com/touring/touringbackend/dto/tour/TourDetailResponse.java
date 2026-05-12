@@ -14,6 +14,14 @@ public record TourDetailResponse(
         String tourType,
         Double averageRating,
         Long totalReviews,
+        String accommodation,
+        String departureFrom,
+        String transport,
+        Boolean isFeatured,
+        String highlights,
+        String inclusions,
+        String exclusions,
+        String terms,
         List<ImageDTO> images,
         List<ScheduleDTO> schedules,
         List<ItineraryDTO> itineraries
@@ -36,6 +44,7 @@ public record TourDetailResponse(
             Long itineraryId,
             Integer dayNumber,
             String title,
-            String description
+            String description,
+            String imageUrl
     ) {}
 }

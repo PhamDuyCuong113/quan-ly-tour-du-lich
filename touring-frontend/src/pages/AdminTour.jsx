@@ -34,7 +34,9 @@ const AdminTour = () => {
     // --- STATES CHO FORM DỮ LIỆU ---
     const [newTour, setNewTour] = useState({
         tourCode: '', tourName: '', destination: '', basePrice: '',
-        description: '', tourType: 'DOMESTIC', durationDays: 1
+        description: '', tourType: 'DOMESTIC', durationDays: 1,
+        accommodation: '', departureFrom: '', transport: '', isFeatured: false,
+        highlights: '', inclusions: '', exclusions: '', terms: ''
     });
     const [newSchedule, setNewSchedule] = useState({
         departureDate: '', returnDate: '', maxSlots: 20, price: ''
@@ -254,11 +256,25 @@ const AdminTour = () => {
                                 <option value="DOMESTIC">Trong nước</option>
                                 <option value="INTERNATIONAL">Quốc tế</option>
                             </select>
+                            <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nơi khởi hành" onChange={e => setNewTour({...newTour, departureFrom: e.target.value})} />
+                            <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Phương tiện di chuyển" onChange={e => setNewTour({...newTour, transport: e.target.value})} />
+                            <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nơi lưu trú (Khách sạn)" onChange={e => setNewTour({...newTour, accommodation: e.target.value})} />
+                            
+                            <label className="flex items-center gap-2 p-4 bg-gray-100 rounded-2xl font-bold cursor-pointer">
+                                <input type="checkbox" className="w-5 h-5 accent-blue-600" onChange={e => setNewTour({...newTour, isFeatured: e.target.checked})} />
+                                Tour nổi bật
+                            </label>
+
                             <div className="col-span-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Tải ảnh đại diện</label>
                                 <input type="file" className="w-full p-4 bg-blue-50 border-2 border-dashed border-blue-200 rounded-2xl mt-1 font-bold" onChange={(e) => setSelectedFile(e.target.files[0])} />
                             </div>
-                            <textarea className="col-span-2 p-4 bg-gray-100 rounded-2xl h-24 font-medium" placeholder="Mô tả..." onChange={e => setNewTour({...newTour, description: e.target.value})}></textarea>
+                            <textarea className="col-span-2 p-4 bg-gray-100 rounded-2xl h-24 font-medium" placeholder="Mô tả tổng quan..." onChange={e => setNewTour({...newTour, description: e.target.value})}></textarea>
+                            <textarea className="col-span-2 p-4 bg-gray-100 rounded-2xl h-24 font-medium" placeholder="Điểm nhấn hành trình..." onChange={e => setNewTour({...newTour, highlights: e.target.value})}></textarea>
+                            <textarea className="col-span-2 p-4 bg-gray-100 rounded-2xl h-24 font-medium" placeholder="Giá Tour Bao Gồm..." onChange={e => setNewTour({...newTour, inclusions: e.target.value})}></textarea>
+                            <textarea className="col-span-2 p-4 bg-gray-100 rounded-2xl h-24 font-medium" placeholder="Giá Tour Không Bao Gồm..." onChange={e => setNewTour({...newTour, exclusions: e.target.value})}></textarea>
+                            <textarea className="col-span-2 p-4 bg-gray-100 rounded-2xl h-24 font-medium" placeholder="Điều Khoản & Lưu Ý..." onChange={e => setNewTour({...newTour, terms: e.target.value})}></textarea>
+
                             <button className="col-span-2 bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-xl transition-all uppercase tracking-widest">Lưu Tour</button>
                         </form>
                     </div>

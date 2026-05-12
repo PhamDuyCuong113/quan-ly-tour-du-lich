@@ -38,60 +38,60 @@ function App() {
 
             <main>
                 <Suspense fallback={<div className="flex items-center justify-center py-24 text-gray-400 font-bold">Đang tải...</div>}>
-                <Routes>
-                    {/* --- CÁC TRANG CÔNG KHAI (AI CŨNG XEM ĐƯỢC) --- */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/tours/:id" element={<TourDetail />} />
+                    <Routes>
+                        {/* --- CÁC TRANG CÔNG KHAI (AI CŨNG XEM ĐƯỢC) --- */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/tours/:id" element={<TourDetail />} />
 
-                    {/* --- CÁC TRANG DÀNH CHO KHÁCH HÀNG (CẦN ĐĂNG NHẬP) --- */}
-                    <Route path="/my-bookings" element={
-                        <ProtectedRoute>
-                            <MyBookings />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                        <ProtectedRoute>
-                            <Profile />
-                        </ProtectedRoute>
-                    } />
-
-                    {/* --- HỆ THỐNG QUẢN TRỊ (PHÂN QUYỀN ADMIN & STAFF) --- */}
-                    <Route path="/admin" element={
-                        <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                            <AdminLayout />
-                        </ProtectedRoute>
-                    }>
-                        {/* Mặc định khi vào /admin sẽ hiện trang quản lý tour */}
-                        <Route index element={<AdminDashboard />} />
-                        <Route path="dashboard" element={<AdminDashboard />} />
-                        <Route path="tours" element={<AdminTour />} />
-                        <Route path="vouchers" element={<AdminVoucher />} />
-                        <Route path="tours/:id" element={<AdminTourDetail />} />
-                        <Route path="bookings/manual" element={<AdminManualBooking />} />
-                        {/* CHỈ ADMIN mới có quyền truy cập 2 trang dưới đây */}
-                        <Route path="staffs" element={
-                            <ProtectedRoute allowedRoles={['ADMIN']}>
-                                <AdminStaff />
+                        {/* --- CÁC TRANG DÀNH CHO KHÁCH HÀNG (CẦN ĐĂNG NHẬP) --- */}
+                        <Route path="/my-bookings" element={
+                            <ProtectedRoute>
+                                <MyBookings />
                             </ProtectedRoute>
                         } />
-                        <Route path="customers" element={
+                        <Route path="/profile" element={
+                            <ProtectedRoute>
+                                <Profile />
+                            </ProtectedRoute>
+                        } />
+
+                        {/* --- HỆ THỐNG QUẢN TRỊ (PHÂN QUYỀN ADMIN & STAFF) --- */}
+                        <Route path="/admin" element={
                             <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                                <AdminCustomer />
+                                <AdminLayout />
                             </ProtectedRoute>
-                        } />
-                        <Route path="customers/:id" element={
-                            <ProtectedRoute allowedRoles={['ADMIN','STAFF']}>
-                                <CustomerDetail />
-                            </ProtectedRoute>
-                        }/>
+                        }>
+                            {/* Mặc định khi vào /admin sẽ hiện trang quản lý tour */}
+                            <Route index element={<AdminDashboard />} />
+                            <Route path="dashboard" element={<AdminDashboard />} />
+                            <Route path="tours" element={<AdminTour />} />
+                            <Route path="vouchers" element={<AdminVoucher />} />
+                            <Route path="tours/:id" element={<AdminTourDetail />} />
+                            <Route path="bookings/manual" element={<AdminManualBooking />} />
+                            {/* CHỈ ADMIN mới có quyền truy cập 2 trang dưới đây */}
+                            <Route path="staffs" element={
+                                <ProtectedRoute allowedRoles={['ADMIN']}>
+                                    <AdminStaff />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="customers" element={
+                                <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                                    <AdminCustomer />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="customers/:id" element={
+                                <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                                    <CustomerDetail />
+                                </ProtectedRoute>
+                            } />
 
 
-                    </Route>
+                        </Route>
 
-                    {/* --- TRANG LỖI 404 --- */}
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
+                        {/* --- TRANG LỖI 404 --- */}
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
                 </Suspense>
             </main>
 

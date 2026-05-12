@@ -59,7 +59,15 @@ const AdminTourDetail = () => {
                 basePrice: parseFloat(tour.basePrice),
                 durationDays: parseInt(tour.durationDays),
                 tourType: tour.tourType,
-                description: tour.description
+                description: tour.description,
+                accommodation: tour.accommodation,
+                departureFrom: tour.departureFrom,
+                transport: tour.transport,
+                isFeatured: tour.isFeatured,
+                highlights: tour.highlights,
+                inclusions: tour.inclusions,
+                exclusions: tour.exclusions,
+                terms: tour.terms
             };
 
             await api.put(`/tours/${id}`, payload);
@@ -106,15 +114,36 @@ const AdminTourDetail = () => {
 
 
 
-    // --- 5. XỬ LÝ HÀNH TRÌNH (ITINERARY) ---
     const addItineraryRow = () => {
-        setItineraries([...itineraries, { dayNumber: itineraries.length + 1, title: '', description: '' }]);
+        setItineraries([...itineraries, { dayNumber: itineraries.length + 1, title: '', description: '', imageUrl: '', imagePublicId: '' }]);
     };
 
     const handleItineraryChange = (index, field, value) => {
         const updated = [...itineraries];
         updated[index][field] = value;
         setItineraries(updated);
+    };
+
+    const handleUploadItineraryImage = async (index, e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setLoading(true);
+            const res = await api.post(`/tours/itineraries/upload-image`, formData);
+            const updated = [...itineraries];
+            updated[index].imageUrl = res.data.imageUrl;
+            updated[index].imagePublicId = res.data.imagePublicId;
+            setItineraries(updated);
+        } catch (error) {
+            alert("Lỗi upload ảnh lịch trình");
+        } finally {
+            setLoading(false);
+            e.target.value = '';
+        }
     };
 
     const removeItineraryRow = (index) => {
@@ -241,10 +270,47 @@ const AdminTourDetail = () => {
                             <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" type="number" value={tour?.basePrice || ''} onChange={e => setTour({...tour, basePrice: e.target.value})} />
                         </div>
 
+                        {/* Các thông tin mở rộng */}
+                        <div className="col-span-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Nơi khởi hành</label>
+                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.departureFrom || ''} onChange={e => setTour({...tour, departureFrom: e.target.value})} />
+                        </div>
+                        <div className="col-span-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Phương tiện di chuyển</label>
+                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.transport || ''} onChange={e => setTour({...tour, transport: e.target.value})} />
+                        </div>
+                        
+                        <div className="col-span-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Nơi lưu trú</label>
+                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.accommodation || ''} onChange={e => setTour({...tour, accommodation: e.target.value})} />
+                        </div>
+                        <div className="col-span-1 flex items-center mt-6">
+                            <label className="flex items-center gap-2 p-5 bg-gray-50 rounded-2xl font-bold cursor-pointer shadow-inner w-full text-gray-700">
+                                <input type="checkbox" className="w-5 h-5 accent-blue-600" checked={tour?.isFeatured || false} onChange={e => setTour({...tour, isFeatured: e.target.checked})} />
+                                Tour nổi bật
+                            </label>
+                        </div>
+
                         {/* Hàng 4: Mô tả */}
                         <div className="col-span-2 border-t pt-8 mt-4">
-                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Mô tả bài viết giới thiệu</label>
-                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-64 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.description || ''} onChange={e => setTour({...tour, description: e.target.value})} />
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Mô tả tổng quan</label>
+                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-40 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.description || ''} onChange={e => setTour({...tour, description: e.target.value})} />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Điểm nhấn hành trình</label>
+                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-32 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.highlights || ''} onChange={e => setTour({...tour, highlights: e.target.value})} />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Giá Tour Bao Gồm</label>
+                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-32 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.inclusions || ''} onChange={e => setTour({...tour, inclusions: e.target.value})} />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Giá Tour Không Bao Gồm</label>
+                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-32 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.exclusions || ''} onChange={e => setTour({...tour, exclusions: e.target.value})} />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase ml-2 italic">Điều Khoản & Lưu Ý</label>
+                            <textarea className="w-full p-5 bg-gray-50 rounded-2xl mt-2 h-32 font-medium text-gray-600 leading-relaxed border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.terms || ''} onChange={e => setTour({...tour, terms: e.target.value})} />
                         </div>
                     </div>
                 )}
@@ -281,18 +347,45 @@ const AdminTourDetail = () => {
                 {activeTab === 'itinerary' && (
                     <div className="space-y-8 animate-in fade-in duration-500">
                         {itineraries.map((it, idx) => (
-                            <div key={idx} className="relative p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                                <button onClick={() => removeItineraryRow(idx)} className="absolute top-6 right-6 p-2 bg-white text-red-400 rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-all"><X size={20} /></button>
-                                <div className="flex items-center gap-6 mb-6">
-                                    <span className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg italic">{it.dayNumber}</span>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Tiêu đề ngày</label>
-                                        <input className="w-full p-4 bg-white rounded-2xl mt-1 font-bold text-gray-800 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" value={it.title || ''} onChange={(e) => handleItineraryChange(idx, 'title', e.target.value)} />
+                            <div key={idx} className="relative p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-8">
+                                <button onClick={() => removeItineraryRow(idx)} className="absolute top-6 right-6 p-2 bg-white text-red-400 rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-all z-10"><X size={20} /></button>
+                                
+                                {/* Cột upload ảnh */}
+                                <div className="w-full md:w-1/3 flex flex-col gap-4">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Ảnh minh họa</label>
+                                    <div className="relative group rounded-[2rem] overflow-hidden h-48 border-2 border-dashed border-gray-200 bg-white flex items-center justify-center">
+                                        {it.imageUrl ? (
+                                            <>
+                                                <img src={it.imageUrl} alt={`Ngày ${it.dayNumber}`} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                                    <button onClick={() => handleItineraryChange(idx, 'imageUrl', '')} className="p-3 bg-white text-red-500 rounded-full shadow-2xl hover:scale-110 transition-all">
+                                                        <Trash2 size={20} />
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-gray-50 transition-colors">
+                                                <ImageIcon className="text-gray-300 mb-2" size={32} />
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase">Tải ảnh lên</span>
+                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadItineraryImage(idx, e)} />
+                                            </label>
+                                        )}
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Hoạt động chi tiết</label>
-                                    <textarea className="w-full p-6 bg-white rounded-[2rem] mt-1 h-32 outline-none focus:ring-2 focus:ring-blue-500 border-none text-gray-600 font-medium leading-relaxed shadow-sm" value={it.description || ''} onChange={(e) => handleItineraryChange(idx, 'description', e.target.value)} />
+
+                                {/* Cột nội dung */}
+                                <div className="flex-1 flex flex-col gap-4">
+                                    <div className="flex items-center gap-6">
+                                        <span className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg italic shrink-0">{it.dayNumber}</span>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Tiêu đề ngày</label>
+                                            <input className="w-full p-4 bg-white rounded-2xl mt-1 font-bold text-gray-800 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" value={it.title || ''} onChange={(e) => handleItineraryChange(idx, 'title', e.target.value)} placeholder="VD: Lệ Giang - Shangrila" />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Hoạt động chi tiết</label>
+                                        <textarea className="w-full p-6 bg-white rounded-[2rem] mt-1 h-32 outline-none focus:ring-2 focus:ring-blue-500 border-none text-gray-600 font-medium leading-relaxed shadow-sm resize-none" value={it.description || ''} onChange={(e) => handleItineraryChange(idx, 'description', e.target.value)} />
+                                    </div>
                                 </div>
                             </div>
                         ))}

@@ -68,7 +68,7 @@ public class TourService {
         List<TourDetailResponse.ItineraryDTO> itineraryDTOs = tour.getItineraries().stream()
                 .sorted(Comparator.comparing(Itinerary::getDayNumber))
                 .map(it -> new TourDetailResponse.ItineraryDTO(
-                        it.getItineraryId(), it.getDayNumber(), it.getTitle(), it.getDescription()
+                        it.getItineraryId(), it.getDayNumber(), it.getTitle(), it.getDescription(), it.getImageUrl()
                 )).toList();
 
         List<TourDetailResponse.ImageDTO> imageDTOs = (tour.getImages() == null) ? List.of()
@@ -91,7 +91,15 @@ public class TourService {
                 tour.getTourType() != null ? tour.getTourType().name() : "DOMESTIC", // Check null
                 avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0,
                 totalReviews != null ? totalReviews : 0L,
-            imageDTOs,
+                tour.getAccommodation(),
+                tour.getDepartureFrom(),
+                tour.getTransport(),
+                tour.getIsFeatured(),
+                tour.getHighlights(),
+                tour.getInclusions(),
+                tour.getExclusions(),
+                tour.getTerms(),
+                imageDTOs,
                 scheduleDTOs,
                 itineraryDTOs
         );
@@ -147,6 +155,14 @@ public class TourService {
         tour.setDurationDays(request.durationDays());
         tour.setBasePrice(request.basePrice());
         tour.setDescription(request.description());
+        tour.setAccommodation(request.accommodation());
+        tour.setDepartureFrom(request.departureFrom());
+        tour.setTransport(request.transport());
+        tour.setIsFeatured(request.isFeatured() != null ? request.isFeatured() : false);
+        tour.setHighlights(request.highlights());
+        tour.setInclusions(request.inclusions());
+        tour.setExclusions(request.exclusions());
+        tour.setTerms(request.terms());
         tour.setStatus(TourStatus.OPEN);
         tour.setDeleted(false);
 
@@ -167,6 +183,14 @@ public class TourService {
         tour.setDurationDays(request.durationDays());
         tour.setTourType(request.tourType());
         tour.setDescription(request.description());
+        tour.setAccommodation(request.accommodation());
+        tour.setDepartureFrom(request.departureFrom());
+        tour.setTransport(request.transport());
+        tour.setIsFeatured(request.isFeatured() != null ? request.isFeatured() : false);
+        tour.setHighlights(request.highlights());
+        tour.setInclusions(request.inclusions());
+        tour.setExclusions(request.exclusions());
+        tour.setTerms(request.terms());
 
         return mapToTourResponse(tourRepository.save(tour));
     }
@@ -200,6 +224,8 @@ public class TourService {
             it.setDayNumber(req.dayNumber());
             it.setTitle(req.title());
             it.setDescription(req.description());
+            it.setImageUrl(req.imageUrl());
+            it.setImagePublicId(req.imagePublicId());
             return it;
         }).toList();
 
@@ -280,6 +306,17 @@ public class TourService {
             cloudinaryService.deleteImage(img.getPublicId());
         }
         tourImageRepository.delete(img);
+    }
+
+    @Transactional
+    public Map<String, String> uploadItineraryImage(MultipartFile file) {
+        Map<String, Object> uploadResult = cloudinaryService.uploadImage(file, null);
+        String imageUrl = (String) uploadResult.get("secure_url");
+        String publicId = (String) uploadResult.get("public_id");
+        if (imageUrl == null || publicId == null) {
+            throw new RuntimeException("Lỗi khi upload ảnh itinerary");
+        }
+        return Map.of("imageUrl", imageUrl, "imagePublicId", publicId);
     }
 
     /**

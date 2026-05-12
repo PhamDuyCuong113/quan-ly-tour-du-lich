@@ -23,5 +23,14 @@ public record TourCreateRequest(
         @DecimalMin("0.0")
         BigDecimal basePrice,
 
-        String description
+        String description,
+        
+        String accommodation,
+        String departureFrom,
+        String transport,
+        Boolean isFeatured,
+        String highlights,
+        String inclusions,
+        String exclusions,
+        String terms
 ) {}

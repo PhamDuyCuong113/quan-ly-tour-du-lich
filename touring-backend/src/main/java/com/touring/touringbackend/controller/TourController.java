@@ -159,6 +159,19 @@ public class TourController {
     }
 
     /**
+     * Upload ảnh cho 1 ngày trong lịch trình
+     */
+    @PostMapping("/itineraries/upload-image")
+    public ResponseEntity<java.util.Map<String, String>> uploadItineraryImage(
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Không có file để upload");
+        }
+        return ResponseEntity.ok(tourService.uploadItineraryImage(file));
+    }
+
+    /**
      * Mở thêm ngày khởi hành mới
      */
     @PostMapping("/{id}/schedules")

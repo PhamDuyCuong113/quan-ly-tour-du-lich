@@ -47,6 +47,36 @@ public class Tour {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "thumbnail_url", columnDefinition = "TEXT")
+    private String thumbnailUrl;
+
+    @Column(name = "thumbnail_pid")
+    private String thumbnailPid;
+
+    @Column(length = 180)
+    private String accommodation;
+
+    @Column(name = "departure_from", length = 120)
+    private String departureFrom;
+
+    @Column(length = 120)
+    private String transport;
+
+    @Column(name = "is_featured")
+    private Boolean isFeatured = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String highlights;
+
+    @Column(columnDefinition = "TEXT")
+    private String inclusions;
+
+    @Column(columnDefinition = "TEXT")
+    private String exclusions;
+
+    @Column(columnDefinition = "TEXT")
+    private String terms;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private TourStatus status;
