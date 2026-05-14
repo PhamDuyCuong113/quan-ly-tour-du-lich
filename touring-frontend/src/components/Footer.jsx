@@ -33,9 +33,9 @@ const Footer = () => (
                         Nền tảng đặt tour du lịch cao cấp, kết nối hàng ngàn điểm đến tuyệt vời trên khắp thế giới.
                     </p>
                     <div className="mt-5 space-y-2 text-sm">
-                        <p className="inline-flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-400" /> 123 Nguyễn Huệ, Q.1, TP.HCM</p>
-                        <p className="inline-flex items-center gap-2"><Phone className="w-4 h-4 text-sky-400" /> 1900 1234 (24/7)</p>
-                        <p className="inline-flex items-center gap-2"><Mail className="w-4 h-4 text-sky-400" /> hello@touring.vn</p>
+                        <p className="inline-flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-400" /> 93 phố Giáp Nhị,quận Hoàng Mai,TP Hà Nội </p>
+                        <p className="inline-flex items-center gap-2"><Phone className="w-4 h-4 text-sky-400" /> 0965 765 268 (24/7)</p>
+                        <p className="inline-flex items-center gap-2"><Mail className="w-4 h-4 text-sky-400" /> duycuongtryhard113@gmail.com</p>
                     </div>
                 </div>
 
