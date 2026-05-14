@@ -72,8 +72,8 @@ const Profile = () => {
                     <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, white 0, transparent 18%), radial-gradient(circle at 80% 10%, white 0, transparent 14%)' }} />
                 </div>
 
-                <div className="px-6 md:px-10 pb-10 -mt-16">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 shadow-xl border border-gray-100 dark:border-slate-800">
+                <div className="px-6 md:px-10 pb-10 -mt-16 relative z-10">
+                    <div className="p-6 md:p-8">
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                             <div className="flex items-start gap-5">
                                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-[2rem] bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center text-white shadow-xl">
