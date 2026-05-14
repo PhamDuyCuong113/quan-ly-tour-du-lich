@@ -1,5 +1,6 @@
 package com.touring.touringbackend.controller;
 
+import com.touring.touringbackend.audit.Audited;
 import com.touring.touringbackend.dto.tour.*;
 import com.touring.touringbackend.security.CustomUserDetails;
 import com.touring.touringbackend.service.TourService;
@@ -80,6 +81,7 @@ public class TourController {
      * Tạo Tour mới (Tự động gán người tạo làm chủ)
      */
     @PostMapping
+    @Audited(action = "CREATE_TOUR", tableName = "tour", description = "Tạo tour mới")
     public ResponseEntity<TourResponse> createTour(
             @Valid @RequestBody TourCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
@@ -90,6 +92,7 @@ public class TourController {
      * Cập nhật thông tin Tour
      */
     @PutMapping("/{id}")
+    @Audited(action = "UPDATE_TOUR", tableName = "tour", description = "Cập nhật thông tin tour")
     public ResponseEntity<TourResponse> updateTour(
             @PathVariable Long id,
             @Valid @RequestBody TourCreateRequest request,
@@ -101,6 +104,7 @@ public class TourController {
      * Xóa tour (Xóa mềm)
      */
     @DeleteMapping("/{id}")
+    @Audited(action = "DELETE_TOUR", tableName = "tour", description = "Xoá tour")
     public ResponseEntity<String> deleteTour(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails currentUser) {

@@ -1,5 +1,6 @@
 package com.touring.touringbackend.controller;
 
+import com.touring.touringbackend.audit.Audited;
 import com.touring.touringbackend.dto.promotion.PromotionRequest;
 import com.touring.touringbackend.entity.Promotion;
 import com.touring.touringbackend.entity.PromotionStatus;
@@ -22,6 +23,7 @@ public class PromotionController {
      * API tạo mã khuyến mãi mới (Chỉ dành cho ADMIN)
      */
     @PostMapping
+    @Audited(action = "CREATE_VOUCHER", tableName = "promotion", description = "Tạo mã khuyến mãi")
     public ResponseEntity<String> create(@Valid @RequestBody PromotionRequest request) {
         // 1. Chuyển đổi dữ liệu từ DTO sang Entity
         Promotion promotion = new Promotion();
@@ -48,11 +50,13 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{id}")
+    @Audited(action = "DELETE_VOUCHER", tableName = "promotion", description = "Xoá mã khuyến mãi")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         promotionRepository.deleteById(id);
         return ResponseEntity.ok("Đã xóa mã khuyến mãi");
     }
     @PutMapping("/{id}")
+    @Audited(action = "UPDATE_VOUCHER", tableName = "promotion", description = "Cập nhật mã khuyến mãi")
     public ResponseEntity<String> update(@PathVariable Long id, @Valid @RequestBody PromotionRequest request) {
         Promotion promo = promotionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mã giảm giá"));

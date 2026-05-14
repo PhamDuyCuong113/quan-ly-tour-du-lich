@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -37,6 +38,7 @@ public class SecurityConfig {
                         // Public APIs
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tours/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/destinations", "/api/destinations/**").permitAll()
 
                         // Swagger UI & OpenAPI Docs
                         .requestMatchers(

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "audit_log")
 public class AuditLog {
 
@@ -25,13 +26,32 @@ public class AuditLog {
     @JsonIgnore
     private Account account;
 
+    // Snapshot username để vẫn đọc được khi account bị xoá
+    @Column(name = "username", length = 80)
+    private String username;
+
+    // Vai trò tại thời điểm thao tác (ADMIN, STAFF, CUSTOMER, SYSTEM)
+    @Column(name = "role", length = 30)
+    private String role;
+
     // Hành động: CREATE_BOOKING, CANCEL_BOOKING, UPDATE_TOUR,...
-    @Column(nullable = false)
+    @Column(nullable = false, length = 80)
     private String action;
 
-    // Tên bảng bị tác động: booking, payment, tour,...
-    @Column(name = "table_name")
+    // Tên bảng/đối tượng bị tác động: booking, payment, tour,...
+    @Column(name = "table_name", length = 60)
     private String tableName;
+
+    // ID của entity bị tác động (nếu có)
+    @Column(name = "entity_id")
+    private Long entityId;
+
+    // Mô tả ngắn gọn (vd: "Tạo tour 'Đà Nẵng 3N2Đ'")
+    @Column(name = "description", length = 500)
+    private String description;
+
+    @Column(name = "ip_address", length = 60)
+    private String ipAddress;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

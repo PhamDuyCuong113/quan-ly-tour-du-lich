@@ -1,5 +1,6 @@
 package com.touring.touringbackend.controller;
 
+import com.touring.touringbackend.audit.Audited;
 import com.touring.touringbackend.dto.booking.BookingRequest;
 import com.touring.touringbackend.dto.booking.BookingResponse;
 import com.touring.touringbackend.security.CustomUserDetails;
@@ -21,6 +22,7 @@ public class BookingController {
 
     // 1. Đặt tour mới
     @PostMapping
+    @Audited(action = "CREATE_BOOKING", tableName = "booking", description = "Khách hàng đặt tour")
     public ResponseEntity<BookingResponse> createBooking(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody BookingRequest request) {
@@ -48,6 +50,7 @@ public class BookingController {
 
     // 4. Hủy tour
     @PatchMapping("/{id}/cancel")
+    @Audited(action = "CANCEL_BOOKING", tableName = "booking", description = "Hủy đơn đặt tour")
     public ResponseEntity<BookingResponse> cancelBooking(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id) {

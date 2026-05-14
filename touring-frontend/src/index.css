@@ -1,1 +1,173 @@
 @import "tailwindcss";
+
+/* ===== Travel Premium palette (Public site) ===== */
+:root {
+  --tv-primary: #0ea5e9;        /* sky-500 */
+  --tv-primary-deep: #0369a1;   /* sky-700 */
+  --tv-ocean: #0c4a6e;
+  --tv-teal: #14b8a6;
+  --tv-sand: #fef3c7;
+  --tv-coral: #fb7185;
+  --tv-bg: #f8fafc;
+  --tv-surface: #ffffff;
+  --tv-text: #0f172a;
+  --tv-text-soft: #475569;
+  --tv-border: #e2e8f0;
+  --tv-glass: rgba(255, 255, 255, 0.7);
+  --tv-glass-border: rgba(255, 255, 255, 0.4);
+  --tv-shadow-soft: 0 10px 30px -12px rgba(2, 132, 199, 0.18);
+  --tv-shadow-hover: 0 24px 48px -16px rgba(2, 132, 199, 0.28);
+}
+
+html.dark {
+  --tv-primary: #38bdf8;
+  --tv-primary-deep: #0284c7;
+  --tv-bg: #0b1220;
+  --tv-surface: #111a2e;
+  --tv-text: #e2e8f0;
+  --tv-text-soft: #94a3b8;
+  --tv-border: #1f2a44;
+  --tv-glass: rgba(17, 26, 46, 0.6);
+  --tv-glass-border: rgba(56, 189, 248, 0.2);
+  --tv-shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --tv-shadow-hover: 0 24px 48px -16px rgba(0, 0, 0, 0.75);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--tv-bg);
+  color: var(--tv-text);
+  font-family: 'Inter', 'Be Vietnam Pro', system-ui, -apple-system, "Segoe UI", sans-serif;
+  transition: background-color .3s ease, color .3s ease;
+}
+
+/* Glassmorphism */
+.tv-glass {
+  background: var(--tv-glass);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--tv-glass-border);
+}
+
+/* Shimmer loading */
+@keyframes tv-shimmer { 0% { background-position: -400px 0 } 100% { background-position: 400px 0 } }
+.tv-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 40%, #e2e8f0 80%);
+  background-size: 800px 100%;
+  animation: tv-shimmer 1.4s infinite linear;
+}
+html.dark .tv-shimmer {
+  background: linear-gradient(90deg, #1e293b 0%, #243049 40%, #1e293b 80%);
+  background-size: 800px 100%;
+}
+
+/* Float animation */
+@keyframes tv-float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+.tv-float { animation: tv-float 6s ease-in-out infinite; }
+
+/* Hero gradient blob */
+@keyframes tv-blob { 0%, 100% { transform: translate(0,0) scale(1) } 33% { transform: translate(30px,-20px) scale(1.1) } 66% { transform: translate(-20px,30px) scale(0.95) } }
+.tv-blob { animation: tv-blob 14s ease-in-out infinite; filter: blur(60px); }
+
+/* Reveal on scroll fallback */
+.tv-fade-up { opacity: 0; transform: translateY(24px); transition: all .7s cubic-bezier(.2,.7,.2,1); }
+.tv-fade-up.in { opacity: 1; transform: none; }
+
+/* ===== Design System Tokens ("Structured Clarity") ===== */
+:root {
+  /* Brand */
+  --color-primary: #1e3a5f;
+  --color-primary-dark: #162d4a;
+  --color-primary-light: #2a4f82;
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+
+  /* Status */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  --color-purple: #8b5cf6;
+
+  /* Surfaces */
+  --color-bg: #f0f4f8;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+
+  /* Text */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-white: #ffffff;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+  /* Layout */
+  --sidebar-width: 220px;
+  --header-height: 60px;
+  --container-max-width: 1440px;
+  --container-min-width: 320px;
+  --grid-columns: 12;
+  --grid-gap: 16px;
+}
+
+html,
+body,
+#root {
+  min-width: var(--container-min-width);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Utility classes ===== */
+.page-container {
+  min-width: 0;
+  width: 100%;
+}
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  gap: var(--grid-gap);
+}
+
+.col-1  { grid-column: span 1; }
+.col-2  { grid-column: span 2; }
+.col-3  { grid-column: span 3; }
+.col-4  { grid-column: span 4; }
+.col-5  { grid-column: span 5; }
+.col-6  { grid-column: span 6; }
+.col-7  { grid-column: span 7; }
+.col-8  { grid-column: span 8; }
+.col-9  { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+.table-scroll-wrapper {
+  overflow-x: auto;
+}
+
+/* Slim scrollbar (matches design spec) */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

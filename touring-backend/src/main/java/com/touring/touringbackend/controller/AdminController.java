@@ -1,5 +1,6 @@
 package com.touring.touringbackend.controller;
 
+import com.touring.touringbackend.audit.Audited;
 import com.touring.touringbackend.dto.admin.AdminStatsResponse;
 import com.touring.touringbackend.dto.admin.CustomerResponse;
 import com.touring.touringbackend.dto.admin.StaffResponse;
@@ -78,17 +79,20 @@ public class AdminController {
     }
 
     @PostMapping("/staffs")
+    @Audited(action = "CREATE_STAFF", tableName = "staff", description = "Tạo tài khoản nhân viên")
     public ResponseEntity<String> createStaff(@RequestBody RegisterRequest req) {
         return ResponseEntity.ok(adminService.createStaffAccount(req));
     }
 
     @PatchMapping("/staffs/{id}/toggle")
+    @Audited(action = "TOGGLE_STAFF_STATUS", tableName = "staff", description = "Đổi trạng thái nhân viên")
     public ResponseEntity<String> toggleStaff(@PathVariable Long id) {
         adminService.toggleStaffStatus(id);
         return ResponseEntity.ok("Cập nhật trạng thái thành công");
     }
 
     @PatchMapping("/customers/{id}/toggle")
+    @Audited(action = "TOGGLE_CUSTOMER_STATUS", tableName = "customer", description = "Đổi trạng thái khách hàng")
     public ResponseEntity<String> toggleCustomer(@PathVariable Long id) {
         adminService.toggleCustomerStatus(id);
         return ResponseEntity.ok("Cập nhật trạng thái khách hàng thành công");

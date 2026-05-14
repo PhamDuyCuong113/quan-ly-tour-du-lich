@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -17,6 +18,8 @@ const AdminCustomer = lazy(() => import('./pages/AdminCustomer'));
 const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminManualBooking = lazy(() => import('./pages/AdminManualBooking.jsx'));
+const AdminAuditLog = lazy(() => import('./pages/AdminAuditLog'));
+const AdminDestination = lazy(() => import('./pages/AdminDestination'));
 
 // Component hiển thị khi gõ sai URL
 const NotFound = () => (
@@ -30,14 +33,23 @@ const NotFound = () => (
     </div>
 );
 
+function AppShell({ children }) {
+    const { pathname } = useLocation();
+    const isAdmin = pathname.startsWith('/admin');
+    const isAuth = pathname.startsWith('/login');
+    return (
+        <div className="min-h-screen font-sans antialiased" style={{ background: 'var(--tv-bg)', color: 'var(--tv-text)' }}>
+            {!isAdmin && <Navbar />}
+            <main>{children}</main>
+            {!isAdmin && !isAuth && <Footer />}
+        </div>
+    );
+}
+
 function App() {
     return (
-        <div className="min-h-screen bg-gray-50 font-sans antialiased">
-            {/* 1. Thanh điều hướng chung cho toàn bộ website */}
-            <Navbar />
-
-            <main>
-                <Suspense fallback={<div className="flex items-center justify-center py-24 text-gray-400 font-bold">Đang tải...</div>}>
+        <AppShell>
+                <Suspense fallback={<div className="flex items-center justify-center py-24 text-[var(--tv-text-soft)] font-bold">Đang tải...</div>}>
                     <Routes>
                         {/* --- CÁC TRANG CÔNG KHAI (AI CŨNG XEM ĐƯỢC) --- */}
                         <Route path="/" element={<Home />} />
@@ -85,6 +97,16 @@ function App() {
                                     <CustomerDetail />
                                 </ProtectedRoute>
                             } />
+                            <Route path="audit-logs" element={
+                                <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                                    <AdminAuditLog />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="destinations" element={
+                                <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                                    <AdminDestination />
+                                </ProtectedRoute>
+                            } />
 
 
                         </Route>
@@ -93,13 +115,7 @@ function App() {
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </Suspense>
-            </main>
-
-            {/* Footer đồng bộ cho toàn trang */}
-            <footer className="mt-20 py-10 border-t border-gray-100 text-center text-gray-400 text-sm font-medium">
-                &copy; 2026 TOURING APP. Phát triển bởi Cường Phạm. All rights reserved.
-            </footer>
-        </div>
+        </AppShell>
     );
 }
 
