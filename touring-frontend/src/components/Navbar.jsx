@@ -9,7 +9,6 @@ const NAV_ITEMS = [
     { to: '/', label: 'Trang chủ' },
     { to: '/?cat=domestic', label: 'Tour trong nước' },
     { to: '/?cat=international', label: 'Tour quốc tế' },
-    { to: '/?cat=combo', label: 'Combo nghỉ dưỡng' },
 ];
 
 const Navbar = () => {

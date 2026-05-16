@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion as Motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import api from '../api/axios';
 import Hero from '../components/home/Hero';
@@ -14,10 +14,17 @@ import { FALLBACK_DESTINATIONS } from '../data/mock';
 
 const Home = () => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [tours, setTours] = useState([]);
     const [loading, setLoading] = useState(true);
     const [destinations, setDestinations] = useState([]);
-    const [filter, setFilter] = useState({ dest: '', minPrice: 0, maxPrice: 999999999 });
+    const [filter, setFilter] = useState({
+        dest: '',
+        minPrice: 0,
+        maxPrice: 999999999,
+        tourType: '',
+        destinationId: null,
+    });
     const cacheRef = useRef(new Map());
     const tourSectionRef = useRef(null);
 
@@ -30,7 +37,10 @@ const Home = () => {
         }
         setLoading(true);
         try {
-            const res = params?.destination || params?.minPrice || params?.maxPrice
+            const hasFilters = Object.values(params || {}).some(
+                (v) => v !== undefined && v !== null && v !== ''
+            );
+            const res = hasFilters
                 ? await api.get('/tours/search', { params })
                 : await api.get('/tours');
             cacheRef.current.set(key, res.data);
@@ -57,22 +67,74 @@ const Home = () => {
         return () => { active = false; };
     }, []);
 
+    useEffect(() => {
+        const cat = searchParams.get('cat');
+        const destinationIdParam = searchParams.get('destinationId');
+        const destinationName = searchParams.get('destinationName') || '';
+
+        if (!cat && !destinationIdParam) {
+            return;
+        }
+
+        const nextTourType = cat === 'domestic'
+            ? 'DOMESTIC'
+            : cat === 'international'
+                ? 'INTERNATIONAL'
+                : '';
+
+        const parsedDestinationId = destinationIdParam ? Number(destinationIdParam) : NaN;
+        const nextDestinationId = Number.isFinite(parsedDestinationId) ? parsedDestinationId : null;
+
+        setFilter({
+            dest: destinationName,
+            minPrice: 0,
+            maxPrice: 999999999,
+            tourType: nextTourType,
+            destinationId: nextDestinationId,
+        });
+
+        fetchTours({
+            tourType: nextTourType || undefined,
+            destinationId: nextDestinationId ?? undefined,
+        });
+
+        tourSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [searchParams, fetchTours]);
+
     const handleHeroSearch = useCallback(({ dest, budget }) => {
         const [minStr, maxStr] = (budget || '').split('-');
         const min = Number(minStr) || 0;
         const max = Number(maxStr) || 999999999;
-        setFilter({ dest, minPrice: min, maxPrice: max });
-        fetchTours({ destination: dest || undefined, minPrice: min, maxPrice: max });
+        setFilter({ dest, minPrice: min, maxPrice: max, tourType: '', destinationId: null });
+        setSearchParams({});
+        fetchTours({ keyword: dest || undefined, minPrice: min, maxPrice: max });
         tourSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, [fetchTours]);
+    }, [fetchTours, setSearchParams]);
 
     const handlePickDestination = useCallback((d) => {
-        setFilter((f) => ({ ...f, dest: d.name }));
-        fetchTours({ destination: d.name, minPrice: 0, maxPrice: 999999999 });
+        if (!d?.destinationId) {
+            return;
+        }
+        setFilter({
+            dest: d.name || '',
+            minPrice: 0,
+            maxPrice: 999999999,
+            tourType: '',
+            destinationId: d.destinationId,
+        });
+        setSearchParams({ destinationId: String(d.destinationId), destinationName: d.name || '' });
         tourSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, [fetchTours]);
+    }, [setSearchParams]);
 
     const skeletons = useMemo(() => Array.from({ length: 8 }), []);
+    const title = filter.dest
+        ? `Tour tại ${filter.dest}`
+        : filter.tourType === 'DOMESTIC'
+            ? 'Tour trong nước'
+            : filter.tourType === 'INTERNATIONAL'
+                ? 'Tour quốc tế'
+                : 'Được đặt nhiều nhất tuần này';
+    const hasActiveFilter = !!(filter.dest || filter.tourType || filter.destinationId);
 
     return (
         <>
@@ -115,12 +177,16 @@ const Home = () => {
                     <SectionHeader
                         align="left"
                         eyebrow="Tour gợi ý"
-                        title={filter.dest ? `Tour tại ${filter.dest}` : 'Được đặt nhiều nhất tuần này'}
+                        title={title}
                         subtitle="Hơn 10.000 tour với giá tốt nhất, đảm bảo chất lượng đối tác"
                     />
-                    {filter.dest && (
+                    {hasActiveFilter && (
                         <button
-                            onClick={() => { setFilter({ dest: '', minPrice: 0, maxPrice: 999999999 }); fetchTours({}); }}
+                            onClick={() => {
+                                setFilter({ dest: '', minPrice: 0, maxPrice: 999999999, tourType: '', destinationId: null });
+                                setSearchParams({});
+                                fetchTours({});
+                            }}
                             className="text-sm font-semibold text-sky-600 hover:underline"
                         >
                             Bỏ lọc

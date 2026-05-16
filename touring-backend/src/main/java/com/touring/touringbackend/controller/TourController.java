@@ -2,6 +2,7 @@ package com.touring.touringbackend.controller;
 
 import com.touring.touringbackend.audit.Audited;
 import com.touring.touringbackend.dto.tour.*;
+import com.touring.touringbackend.entity.TourType;
 import com.touring.touringbackend.security.CustomUserDetails;
 import com.touring.touringbackend.service.TourService;
 import jakarta.validation.Valid;
@@ -46,8 +47,19 @@ public class TourController {
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) TourType tourType,
+            @RequestParam(required = false) Long destinationId,
             @RequestParam(required = false) String sortBy) {
-        return ResponseEntity.ok(tourService.searchTours(keyword, minPrice, maxPrice, startDate, endDate, sortBy));
+        return ResponseEntity.ok(tourService.searchTours(
+                keyword,
+                minPrice,
+                maxPrice,
+                startDate,
+                endDate,
+                tourType,
+                destinationId,
+                sortBy
+        ));
     }
 
     @GetMapping("/{id}/related")

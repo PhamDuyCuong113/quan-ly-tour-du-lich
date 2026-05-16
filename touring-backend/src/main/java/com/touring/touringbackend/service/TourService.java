@@ -107,8 +107,19 @@ public class TourService {
 
     @Transactional(readOnly = true)
     public List<TourResponse> searchTours(String keyword, BigDecimal minPrice, BigDecimal maxPrice,
-                                          LocalDate startDate, LocalDate endDate, String sortBy) {
-        List<Tour> tours = tourRepository.advancedSearch(keyword, minPrice, maxPrice, startDate, endDate, null);
+                                          LocalDate startDate, LocalDate endDate,
+                                          TourType tourType, Long destinationId,
+                                          String sortBy) {
+        List<Tour> tours = tourRepository.advancedSearch(
+                keyword,
+                minPrice,
+                maxPrice,
+                startDate,
+                endDate,
+                tourType,
+                destinationId,
+                null
+        );
         sortTours(tours, sortBy);
         return tours.stream().map(this::mapToTourResponse).toList();
     }
@@ -135,6 +146,8 @@ public class TourService {
                 maxPrice,
                 startDate,
                 endDate,
+            null,
+            null,
                 null,
                 includeDeleted
         );

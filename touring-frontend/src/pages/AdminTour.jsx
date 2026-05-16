@@ -17,6 +17,7 @@ const AdminTour = () => {
     const role = localStorage.getItem('role'); // Lấy quyền để phân chia giao diện
 
     const [tours, setTours] = useState([]);
+    const [destinations, setDestinations] = useState([]);
     const [stats, setStats] = useState({ totalRevenue: 0, totalBookings: 0, totalCustomers: 0 });
     const [loading, setLoading] = useState(true);
 
@@ -46,13 +47,14 @@ const AdminTour = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Sử dụng API management để Backend tự lọc theo Staff hoặc hiện tất cả cho Admin
-            const [tourRes, statsRes] = await Promise.all([
+            const [tourRes, statsRes, destinationRes] = await Promise.all([
                 api.get('/tours/management/search', { params: { sortBy: 'newest' } }),
-                api.get('/admin/stats')
+                api.get('/admin/stats'),
+                api.get('/destinations')
             ]);
             setTours(tourRes.data);
             setStats(statsRes.data);
+            setDestinations(destinationRes.data || []);
         } catch (error) {
             console.error("Lỗi tải dữ liệu:", error);
         } finally {
@@ -61,6 +63,12 @@ const AdminTour = () => {
     };
 
     useEffect(() => { fetchData(); }, []);
+
+    useEffect(() => {
+        if (!newTour.destination && destinations.length > 0) {
+            setNewTour((prev) => ({ ...prev, destination: destinations[0].name }));
+        }
+    }, [destinations, newTour.destination]);
 
     // --- XỬ LÝ LỌC TOUR (Keyword bao gồm Tên và Địa điểm) ---
     const handleFilter = async () => {
@@ -84,6 +92,10 @@ const AdminTour = () => {
     const handleCreateTour = async (e) => {
         e.preventDefault();
         try {
+            if (!newTour.destination) {
+                alert('Vui lòng chọn điểm đến!');
+                return;
+            }
             const payload = {
                 ...newTour,
                 basePrice: parseFloat(newTour.basePrice),
@@ -249,7 +261,20 @@ const AdminTour = () => {
                         <form onSubmit={handleCreateTour} className="grid grid-cols-2 gap-6">
                             <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Mã Tour" onChange={e => setNewTour({...newTour, tourCode: e.target.value})} required />
                             <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Tên Tour" onChange={e => setNewTour({...newTour, tourName: e.target.value})} required />
-                            <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Điểm đến" onChange={e => setNewTour({...newTour, destination: e.target.value})} required />
+                            <select
+                                className="p-4 bg-gray-100 rounded-2xl font-bold outline-none"
+                                value={newTour.destination}
+                                onChange={e => setNewTour({...newTour, destination: e.target.value})}
+                                required
+                            >
+                                {destinations.length === 0 ? (
+                                    <option value="">Chưa có điểm đến</option>
+                                ) : (
+                                    destinations.map((d) => (
+                                        <option key={d.destinationId} value={d.name}>{d.name}</option>
+                                    ))
+                                )}
+                            </select>
                             <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Số ngày đi" onChange={e => setNewTour({...newTour, durationDays: e.target.value})} required />
                             <input className="p-4 bg-gray-100 rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Giá cơ bản" onChange={e => setNewTour({...newTour, basePrice: e.target.value})} required />
                             <select className="p-4 bg-gray-100 rounded-2xl font-bold outline-none" onChange={e => setNewTour({...newTour, tourType: e.target.value})}>

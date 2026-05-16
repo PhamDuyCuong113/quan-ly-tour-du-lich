@@ -2,6 +2,7 @@ package com.touring.touringbackend.repository;
 
 import com.touring.touringbackend.entity.Tour;
 import com.touring.touringbackend.entity.TourStatus;
+import com.touring.touringbackend.entity.TourType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,6 +40,11 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             "AND (:maxPrice IS NULL OR t.basePrice <= :maxPrice) " +
             "AND (:startDate IS NULL OR s.departureDate >= :startDate) " +
             "AND (:endDate IS NULL OR s.departureDate <= :endDate) " +
+            "AND (:tourType IS NULL OR t.tourType = :tourType) " +
+            "AND (:destinationId IS NULL OR EXISTS (" +
+            "      SELECT 1 FROM Destination d " +
+            "      WHERE d.destinationId = :destinationId " +
+            "      AND LOWER(d.name) = LOWER(t.destination))) " +
             "AND (:staffId IS NULL OR t.staff.id = :staffId) " + // CHỐT CHẶN: Lọc theo chủ sở hữu
             "AND t.isDeleted = false")
     List<Tour> advancedSearch(
@@ -47,6 +53,8 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
+            @Param("tourType") TourType tourType,
+            @Param("destinationId") Long destinationId,
             @Param("staffId") Long staffId // Nếu truyền null -> Admin (xem hết), nếu có ID -> Staff (xem của mình)
     );
 
@@ -58,6 +66,11 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             "AND (:maxPrice IS NULL OR t.basePrice <= :maxPrice) " +
             "AND (:startDate IS NULL OR s.departureDate >= :startDate) " +
             "AND (:endDate IS NULL OR s.departureDate <= :endDate) " +
+            "AND (:tourType IS NULL OR t.tourType = :tourType) " +
+            "AND (:destinationId IS NULL OR EXISTS (" +
+            "      SELECT 1 FROM Destination d " +
+            "      WHERE d.destinationId = :destinationId " +
+            "      AND LOWER(d.name) = LOWER(t.destination))) " +
             "AND (:staffId IS NULL OR t.staff.id = :staffId) " +
             "AND (:includeDeleted = true OR t.isDeleted = false)")
     List<Tour> advancedSearchForManagement(
@@ -66,6 +79,8 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
+            @Param("tourType") TourType tourType,
+            @Param("destinationId") Long destinationId,
             @Param("staffId") Long staffId,
             @Param("includeDeleted") boolean includeDeleted
     );

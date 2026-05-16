@@ -13,6 +13,7 @@ const AdminTourDetail = () => {
 
     // --- 1. STATES ---
     const [tour, setTour] = useState(null);
+    const [destinations, setDestinations] = useState([]);
     const [activeTab, setActiveTab] = useState('basic'); // basic, images, itinerary, schedules
     const [itineraries, setItineraries] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,10 +30,14 @@ const AdminTourDetail = () => {
     const fetchDetail = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/tours/${id}`);
-            setTour(res.data);
+            const [tourRes, destinationRes] = await Promise.all([
+                api.get(`/tours/${id}`),
+                api.get('/destinations')
+            ]);
+            setTour(tourRes.data);
+            setDestinations(destinationRes.data || []);
             // Sắp xếp ngày 1, 2, 3...
-            const sortedIt = (res.data.itineraries || []).sort((a, b) => a.dayNumber - b.dayNumber);
+            const sortedIt = (tourRes.data.itineraries || []).sort((a, b) => a.dayNumber - b.dayNumber);
             setItineraries(sortedIt);
         } catch (error) {
             console.error("Lỗi lấy dữ liệu:", error);
@@ -263,7 +268,18 @@ const AdminTourDetail = () => {
                         {/* Hàng 3: Địa danh, Giá, Số ngày */}
                         <div className="col-span-1">
                             <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Địa danh (Destination)</label>
-                            <input className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={tour?.destination || ''} onChange={e => setTour({...tour, destination: e.target.value})} />
+                            <select
+                                className="w-full p-5 bg-gray-50 rounded-2xl mt-2 font-bold text-gray-700 border-none outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                                value={tour?.destination || ''}
+                                onChange={e => setTour({...tour, destination: e.target.value})}
+                            >
+                                {tour?.destination && !destinations.some((d) => d.name === tour.destination) && (
+                                    <option value={tour.destination}>{tour.destination}</option>
+                                )}
+                                {destinations.map((d) => (
+                                    <option key={d.destinationId} value={d.name}>{d.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="col-span-1">
                             <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Giá sàn (VNĐ)</label>
